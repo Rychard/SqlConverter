@@ -39,7 +39,6 @@ namespace Converter
             this.cboDatabases = new System.Windows.Forms.ComboBox();
             this.btnSet = new System.Windows.Forms.Button();
             this.pbrProgress = new System.Windows.Forms.ProgressBar();
-            this.lblMessage = new System.Windows.Forms.Label();
             this.btnCancel = new System.Windows.Forms.Button();
             this.cbxEncrypt = new System.Windows.Forms.CheckBox();
             this.txtPassword = new System.Windows.Forms.TextBox();
@@ -50,6 +49,7 @@ namespace Converter
             this.lblPassword = new System.Windows.Forms.Label();
             this.cbxTriggers = new System.Windows.Forms.CheckBox();
             this.cbxCreateViews = new System.Windows.Forms.CheckBox();
+            this.lbMessages = new System.Windows.Forms.ListBox();
             this.SuspendLayout();
             // 
             // label1
@@ -99,7 +99,7 @@ namespace Converter
             // btnStart
             // 
             this.btnStart.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
-            this.btnStart.Location = new System.Drawing.Point(365, 216);
+            this.btnStart.Location = new System.Drawing.Point(365, 418);
             this.btnStart.Name = "btnStart";
             this.btnStart.Size = new System.Drawing.Size(198, 23);
             this.btnStart.TabIndex = 17;
@@ -146,24 +146,15 @@ namespace Converter
             // pbrProgress
             // 
             this.pbrProgress.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
-            this.pbrProgress.Location = new System.Drawing.Point(12, 195);
+            this.pbrProgress.Location = new System.Drawing.Point(12, 397);
             this.pbrProgress.Name = "pbrProgress";
             this.pbrProgress.Size = new System.Drawing.Size(652, 18);
             this.pbrProgress.TabIndex = 16;
             // 
-            // lblMessage
-            // 
-            this.lblMessage.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
-            this.lblMessage.Location = new System.Drawing.Point(12, 177);
-            this.lblMessage.Name = "lblMessage";
-            this.lblMessage.Size = new System.Drawing.Size(529, 13);
-            this.lblMessage.TabIndex = 15;
-            this.lblMessage.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
-            // 
             // btnCancel
             // 
             this.btnCancel.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
-            this.btnCancel.Location = new System.Drawing.Point(569, 216);
+            this.btnCancel.Location = new System.Drawing.Point(569, 418);
             this.btnCancel.Name = "btnCancel";
             this.btnCancel.Size = new System.Drawing.Size(95, 23);
             this.btnCancel.TabIndex = 18;
@@ -260,11 +251,24 @@ namespace Converter
             this.cbxCreateViews.Text = "Try to create views (works only in simple cases)";
             this.cbxCreateViews.UseVisualStyleBackColor = true;
             // 
+            // lbMessages
+            // 
+            this.lbMessages.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom)
+            | System.Windows.Forms.AnchorStyles.Left)
+            | System.Windows.Forms.AnchorStyles.Right)));
+            this.lbMessages.FormattingEnabled = true;
+            this.lbMessages.IntegralHeight = false;
+            this.lbMessages.Location = new System.Drawing.Point(12, 174);
+            this.lbMessages.Name = "lbMessages";
+            this.lbMessages.Size = new System.Drawing.Size(652, 217);
+            this.lbMessages.TabIndex = 21;
+            // 
             // MainForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(676, 242);
+            this.ClientSize = new System.Drawing.Size(676, 444);
+            this.Controls.Add(this.lbMessages);
             this.Controls.Add(this.cbxCreateViews);
             this.Controls.Add(this.cbxTriggers);
             this.Controls.Add(this.txtPassDB);
@@ -273,7 +277,6 @@ namespace Converter
             this.Controls.Add(this.txtPassword);
             this.Controls.Add(this.cbxEncrypt);
             this.Controls.Add(this.btnCancel);
-            this.Controls.Add(this.lblMessage);
             this.Controls.Add(this.pbrProgress);
             this.Controls.Add(this.btnSet);
             this.Controls.Add(this.cboDatabases);
@@ -315,12 +318,12 @@ namespace Converter
         private System.Windows.Forms.ComboBox cboDatabases;
         private System.Windows.Forms.Button btnSet;
         private System.Windows.Forms.ProgressBar pbrProgress;
-        private System.Windows.Forms.Label lblMessage;
         private System.Windows.Forms.Button btnCancel;
         private System.Windows.Forms.CheckBox cbxEncrypt;
         private System.Windows.Forms.TextBox txtPassword;
         private System.Windows.Forms.CheckBox cbxTriggers;
         private System.Windows.Forms.CheckBox cbxCreateViews;
+        private System.Windows.Forms.ListBox lbMessages;
     }
 }
 

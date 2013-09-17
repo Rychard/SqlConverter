@@ -103,6 +103,7 @@
     <Compile Include="..\SolutionInfo.cs">
       <Link>Properties\SolutionInfo.cs</Link>
     </Compile>
+    <Compile Include="ConversionConfiguration.cs" />
     <Compile Include="MainForm.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -110,6 +111,7 @@
       <DependentUpon>MainForm.cs</DependentUpon>
     </Compile>
     <Compile Include="Program.cs" />
+    <Compile Include="Properties\Annotations.cs" />
     <Compile Include="TableSelectionDialog.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -169,7 +171,7 @@
   -->
   <ProjectExtensions>
     <VisualStudio>
-      <UserProperties Reset="1" AssemblyVersion="1" AssemblyFileVersion="1" StartDate="20080613" />
+      <UserProperties StartDate="20080613" AssemblyFileVersion="1" AssemblyVersion="1" Reset="1" />
     </VisualStudio>
   </ProjectExtensions>
 </Project>

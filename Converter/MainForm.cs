@@ -1,56 +1,55 @@
 using System;
 using System.Reflection;
 using System.Collections.Generic;
-using System.ComponentModel;
-using System.Data;
-using System.Drawing;
-using System.Text;
 using System.Windows.Forms;
 using System.Data.SqlClient;
-using System.IO;
 using DbAccess;
 
 namespace Converter
 {
     public partial class MainForm : Form
     {
-        #region Constructor
+        private bool _shouldExit;
+        
         public MainForm()
         {
             InitializeComponent();
         }
-        #endregion
 
-        #region Event Handler
         private void btnBrowseSQLitePath_Click(object sender, EventArgs e)
         {
             DialogResult res = saveFileDialog1.ShowDialog(this);
             if (res == DialogResult.Cancel)
+            {
                 return;
+            }
 
             string fpath = saveFileDialog1.FileName;
             txtSQLitePath.Text = fpath;
             pbrProgress.Value = 0;
-            lblMessage.Text = string.Empty;
+            lbMessages.Items.Add(String.Format("Output file set: {0}", fpath));
         }
 
         private void cboDatabases_SelectedIndexChanged(object sender, EventArgs e)
         {
             UpdateSensitivity();
             pbrProgress.Value = 0;
-            lblMessage.Text = string.Empty;
+            lbMessages.Items.Add("cboDatabases - SelectedIndexChanged");
         }
 
         private void btnSet_Click(object sender, EventArgs e)
         {
             try
             {
-            	string constr;
-            	if (cbxIntegrated.Checked) {
-            		constr = GetSqlServerConnectionString(txtSqlAddress.Text, "master");
-            	} else {
-            		constr = GetSqlServerConnectionString(txtSqlAddress.Text, "master", txtUserDB.Text, txtPassDB.Text);
-            	}
+                string constr;
+                if (cbxIntegrated.Checked)
+                {
+                    constr = GetSqlServerConnectionString(txtSqlAddress.Text, "master");
+                }
+                else
+                {
+                    constr = GetSqlServerConnectionString(txtSqlAddress.Text, "master", txtUserDB.Text, txtPassDB.Text);
+                }
                 using (SqlConnection conn = new SqlConnection(constr))
                 {
                     conn.Open();
@@ -61,25 +60,25 @@ namespace Converter
                     {
                         cboDatabases.Items.Clear();
                         while (reader.Read())
+                        {
                             cboDatabases.Items.Add((string)reader[0]);
+                        }
                         if (cboDatabases.Items.Count > 0)
+                        {
                             cboDatabases.SelectedIndex = 0;
-                    } // using
-                } // using
+                        }
+                    }
+                }
 
                 cboDatabases.Enabled = true;
 
                 pbrProgress.Value = 0;
-                lblMessage.Text = string.Empty;
+                lbMessages.Items.Add(String.Format("Connected to SQL Server ({0})", txtSqlAddress.Text));
             }
             catch (Exception ex)
             {
-                MessageBox.Show(this,
-                    ex.Message,
-                    "Failed To Connect",
-                    MessageBoxButtons.OK,
-                    MessageBoxIcon.Error);
-            } // catch
+                MessageBox.Show(this, ex.Message, "Failed To Connect", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
         }
 
         private void txtSQLitePath_TextChanged(object sender, EventArgs e)
@@ -91,11 +90,11 @@ namespace Converter
         {
             UpdateSensitivity();
 
-            string version = Assembly.GetExecutingAssembly().GetName().Version.ToString();
+            String version = Assembly.GetExecutingAssembly().GetName().Version.ToString();
             this.Text = "SQL Server To SQLite DB Converter (" + version + ")";
         }
 
-		private void txtSqlAddress_TextChanged(object sender, EventArgs e)
+        private void txtSqlAddress_TextChanged(object sender, EventArgs e)
         {
             UpdateSensitivity();
         }
@@ -114,7 +113,9 @@ namespace Converter
                 e.Cancel = true;
             }
             else
+            {
                 e.Cancel = false;
+            }
         }
 
         private void cbxEncrypt_CheckedChanged(object sender, EventArgs e)
@@ -147,64 +148,60 @@ namespace Converter
 
         private void btnStart_Click(object sender, EventArgs e)
         {
-        	string sqlConnString;
-        	if (cbxIntegrated.Checked) {
-        		sqlConnString = GetSqlServerConnectionString(txtSqlAddress.Text, (string)cboDatabases.SelectedItem);
-        	} else {
-        		sqlConnString = GetSqlServerConnectionString(txtSqlAddress.Text, (string)cboDatabases.SelectedItem, txtUserDB.Text, txtPassDB.Text);
-        	}
+            string sqlConnString;
+            if (cbxIntegrated.Checked)
+            {
+                sqlConnString = GetSqlServerConnectionString(txtSqlAddress.Text, (string)cboDatabases.SelectedItem);
+            }
+            else
+            {
+                sqlConnString = GetSqlServerConnectionString(txtSqlAddress.Text, (string)cboDatabases.SelectedItem, txtUserDB.Text, txtPassDB.Text);
+            }
             bool createViews = cbxCreateViews.Checked;
-        	
+
             string sqlitePath = txtSQLitePath.Text.Trim();
             this.Cursor = Cursors.WaitCursor;
             SqlConversionHandler handler = new SqlConversionHandler(delegate(bool done,
-                bool success, int percent, string msg) {
-                    Invoke(new MethodInvoker(delegate() {
+                bool success, int percent, string msg)
+            {
+                Invoke(new MethodInvoker(delegate()
+                {
+                    UpdateSensitivity();
+                    //lblMessage.Text = msg;
+                    lbMessages.Items.Add(String.Format("{0}", msg));
+                    pbrProgress.Value = percent;
+
+                    if (done)
+                    {
+                        btnStart.Enabled = true;
+                        this.Cursor = Cursors.Default;
                         UpdateSensitivity();
-                        lblMessage.Text = msg;
-                        pbrProgress.Value = percent;
 
-                        if (done)
+                        if (success)
                         {
-                            btnStart.Enabled = true;
-                            this.Cursor = Cursors.Default;
-                            UpdateSensitivity();
-
-                            if (success)
+                            MessageBox.Show(this, msg, "Conversion Finished", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                            pbrProgress.Value = 0;
+                            lbMessages.Items.Add("Conversion Finished.");
+                        }
+                        else
+                        {
+                            if (!_shouldExit)
                             {
-                                MessageBox.Show(this,
-                                    msg,
-                                    "Conversion Finished",
-                                    MessageBoxButtons.OK,
-                                    MessageBoxIcon.Information);
-                                pbrProgress.Value = 0;
-                                lblMessage.Text = string.Empty;
+                                MessageBox.Show(this, msg, "Conversion Failed", MessageBoxButtons.OK, MessageBoxIcon.Error); pbrProgress.Value = 0;
+                                lbMessages.Items.Add("Conversion Failed!");
                             }
                             else
-                            {
-                                if (!_shouldExit)
-                                {
-                                    MessageBox.Show(this,
-                                        msg,
-                                        "Conversion Failed",
-                                        MessageBoxButtons.OK,
-                                        MessageBoxIcon.Error);
-                                    pbrProgress.Value = 0;
-                                    lblMessage.Text = string.Empty;
-                                }
-                                else
-                                    Application.Exit();
-                            }
+                                Application.Exit();
                         }
-                    }));
+                    }
+                }));
             });
             SqlTableSelectionHandler selectionHandler = new SqlTableSelectionHandler(delegate(List<TableSchema> schema)
             {
                 List<TableSchema> updated = null;
                 Invoke(new MethodInvoker(delegate
                 {
-                    // Allow the user to select which tables to include by showing him the 
-                    // table selection dialog.
+                    // Allow the user to select which tables to include by showing him the table selection dialog.
                     TableSelectionDialog dlg = new TableSelectionDialog();
                     DialogResult res = dlg.ShowTables(schema, this);
                     if (res == DialogResult.OK)
@@ -233,20 +230,21 @@ namespace Converter
             string password = txtPassword.Text.Trim();
             if (!cbxEncrypt.Checked)
                 password = null;
-            SqlServerToSQLite.ConvertSqlServerToSQLiteDatabase(sqlConnString, sqlitePath, password, handler, 
+            SqlServerToSQLite.ConvertSqlServerToSQLiteDatabase(sqlConnString, sqlitePath, password, handler,
                 selectionHandler, viewFailureHandler, cbxTriggers.Checked, createViews);
         }
-
-        #endregion
 
         #region Private Methods
         private void UpdateSensitivity()
         {
-            if (txtSQLitePath.Text.Trim().Length > 0 && cboDatabases.Enabled &&
-                (!cbxEncrypt.Checked || txtPassword.Text.Trim().Length > 0))
+            if (txtSQLitePath.Text.Trim().Length > 0 && cboDatabases.Enabled && (!cbxEncrypt.Checked || txtPassword.Text.Trim().Length > 0))
+            {
                 btnStart.Enabled = true && !SqlServerToSQLite.IsActive;
+            }
             else
+            {
                 btnStart.Enabled = false;
+            }
 
             btnSet.Enabled = txtSqlAddress.Text.Trim().Length > 0 && !SqlServerToSQLite.IsActive;
             btnCancel.Visible = SqlServerToSQLite.IsActive;
@@ -265,20 +263,14 @@ namespace Converter
 
         private static string GetSqlServerConnectionString(string address, string db)
         {
-            string res = @"Data Source=" + address.Trim() +
-                    ";Initial Catalog="+db.Trim()+";Integrated Security=SSPI;";
+            string res = @"Data Source=" + address.Trim() + ";Initial Catalog=" + db.Trim() + ";Integrated Security=SSPI;";
             return res;
         }
         private static string GetSqlServerConnectionString(string address, string db, string user, string pass)
         {
-            string res = @"Data Source=" + address.Trim() +
-            	";Initial Catalog="+db.Trim()+";User ID=" + user.Trim() + ";Password=" + pass.Trim();
+            string res = @"Data Source=" + address.Trim() + ";Initial Catalog=" + db.Trim() + ";User ID=" + user.Trim() + ";Password=" + pass.Trim();
             return res;
         }
         #endregion
-
-        #region Private Variables
-        private bool _shouldExit = false;
-        #endregion        
     }
 }
