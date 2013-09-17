@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.ComponentModel;
 using Converter.Annotations;
 
@@ -6,8 +7,8 @@ namespace Converter
 {
     public class ConversionConfiguration : INotifyPropertyChanged
     {
-        private DateTime _dateCreated;
-        private String _displayName;
+        #region Private Fields
+        
         private String _sqlServerAddress;
         private String _databaseName;
         private Boolean _integratedSecurity;
@@ -17,28 +18,11 @@ namespace Converter
         private String _encryptionPassword;
         private Boolean _createTriggersEnforcingForeignKeys;
         private Boolean _tryToCreateViews;
+        private List<String> _selectedTables;
 
-        public DateTime DateCreated
-        {
-            get { return _dateCreated; }
-            set
-            {
-                if (value.Equals(_dateCreated)) return;
-                _dateCreated = value;
-                OnPropertyChanged("DateCreated");
-            }
-        }
+        #endregion
 
-        public String DisplayName
-        {
-            get { return _displayName; }
-            set
-            {
-                if (value == _displayName) return;
-                _displayName = value;
-                OnPropertyChanged("DisplayName");
-            }
-        }
+        #region Serialized Public Properties
 
         public String SqlServerAddress
         {
@@ -137,6 +121,81 @@ namespace Converter
                 _tryToCreateViews = value;
                 OnPropertyChanged("TryToCreateViews");
             }
+        }
+
+        public List<String> SelectedTables
+        {
+            get { return _selectedTables; }
+            set
+            {
+                if (value.Equals(_selectedTables)) return;
+                _selectedTables = value;
+                OnPropertyChanged("SelectedTables");
+            }
+        }
+
+        #endregion
+
+        #region Non-Serialized Public Properties
+
+        public String ConnectionString
+        {
+            get
+            {
+                if (this.IntegratedSecurity)
+                {
+                    return GetSqlServerConnectionString(this.SqlServerAddress, this.DatabaseName);
+                }
+                else
+                {
+                    return GetSqlServerConnectionString(this.SqlServerAddress, this.DatabaseName, this.User, this.Password);
+                }
+            }
+        }
+
+        public String SerializedXml
+        {
+            get
+            {
+                Boolean success;
+                String serializedXml = SerializationHelper.TryXmlSerialize(this, out success);
+                if (success)
+                {
+                    return serializedXml;
+                }
+                else
+                {
+                    return null;
+                }
+            }
+
+        }
+
+        #endregion
+
+        public ConversionConfiguration()
+        {
+            _sqlServerAddress = "";
+            _databaseName = "";
+            _integratedSecurity = true;
+            _user = "";
+            _password = "";
+            _sqLiteDatabaseFilePath = "";
+            _encryptionPassword = "";
+            _createTriggersEnforcingForeignKeys = false;
+            _tryToCreateViews = false;
+            _selectedTables = new List<String>();
+        }
+
+        private static string GetSqlServerConnectionString(string address, string db)
+        {
+            string res = @"Data Source=" + address.Trim() + ";Initial Catalog=" + db.Trim() + ";Integrated Security=SSPI;";
+            return res;
+        }
+        private static string GetSqlServerConnectionString(string address, string db, string user, string pass)
+        {
+            string res = @"Data Source=" + address.Trim() + ";Initial Catalog=" + db.Trim() + ";User ID=" + user.Trim() + ";Password=" + pass.Trim();
+            return res;
         }
 
 
