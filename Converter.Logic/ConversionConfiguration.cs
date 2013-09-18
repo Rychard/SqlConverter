@@ -1,9 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel;
-using Converter.Annotations;
+using Converter.Logic.Annotations;
 
-namespace Converter
+namespace Converter.Logic
 {
     public class ConversionConfiguration : INotifyPropertyChanged
     {
@@ -26,111 +26,111 @@ namespace Converter
 
         public String SqlServerAddress
         {
-            get { return _sqlServerAddress; }
+            get { return this._sqlServerAddress; }
             set
             {
-                if (value == _sqlServerAddress) return;
-                _sqlServerAddress = value;
-                OnPropertyChanged("SqlServerAddress");
+                if (value == this._sqlServerAddress) return;
+                this._sqlServerAddress = value;
+                this.OnPropertyChanged("SqlServerAddress");
             }
         }
 
         public String DatabaseName
         {
-            get { return _databaseName; }
+            get { return this._databaseName; }
             set
             {
-                if (value == _databaseName) return;
-                _databaseName = value;
-                OnPropertyChanged("DatabaseName");
+                if (value == this._databaseName) return;
+                this._databaseName = value;
+                this.OnPropertyChanged("DatabaseName");
             }
         }
 
         public Boolean IntegratedSecurity
         {
-            get { return _integratedSecurity; }
+            get { return this._integratedSecurity; }
             set
             {
-                if (value.Equals(_integratedSecurity)) return;
-                _integratedSecurity = value;
-                OnPropertyChanged("IntegratedSecurity");
+                if (value.Equals(this._integratedSecurity)) return;
+                this._integratedSecurity = value;
+                this.OnPropertyChanged("IntegratedSecurity");
             }
         }
 
         public String User
         {
-            get { return _user; }
+            get { return this._user; }
             set
             {
-                if (value == _user) return;
-                _user = value;
-                OnPropertyChanged("User");
+                if (value == this._user) return;
+                this._user = value;
+                this.OnPropertyChanged("User");
             }
         }
 
         public String Password
         {
-            get { return _password; }
+            get { return this._password; }
             set
             {
-                if (value == _password) return;
-                _password = value;
-                OnPropertyChanged("Password");
+                if (value == this._password) return;
+                this._password = value;
+                this.OnPropertyChanged("Password");
             }
         }
 
         public String SqLiteDatabaseFilePath
         {
-            get { return _sqLiteDatabaseFilePath; }
+            get { return this._sqLiteDatabaseFilePath; }
             set
             {
-                if (value == _sqLiteDatabaseFilePath) return;
-                _sqLiteDatabaseFilePath = value;
-                OnPropertyChanged("SqLiteDatabaseFilePath");
+                if (value == this._sqLiteDatabaseFilePath) return;
+                this._sqLiteDatabaseFilePath = value;
+                this.OnPropertyChanged("SqLiteDatabaseFilePath");
             }
         }
 
         public String EncryptionPassword
         {
-            get { return _encryptionPassword; }
+            get { return this._encryptionPassword; }
             set
             {
-                if (value == _encryptionPassword) return;
-                _encryptionPassword = value;
-                OnPropertyChanged("EncryptionPassword");
+                if (value == this._encryptionPassword) return;
+                this._encryptionPassword = value;
+                this.OnPropertyChanged("EncryptionPassword");
             }
         }
 
         public Boolean CreateTriggersEnforcingForeignKeys
         {
-            get { return _createTriggersEnforcingForeignKeys; }
+            get { return this._createTriggersEnforcingForeignKeys; }
             set
             {
-                if (value.Equals(_createTriggersEnforcingForeignKeys)) return;
-                _createTriggersEnforcingForeignKeys = value;
-                OnPropertyChanged("CreateTriggersEnforcingForeignKeys");
+                if (value.Equals(this._createTriggersEnforcingForeignKeys)) return;
+                this._createTriggersEnforcingForeignKeys = value;
+                this.OnPropertyChanged("CreateTriggersEnforcingForeignKeys");
             }
         }
 
         public Boolean TryToCreateViews
         {
-            get { return _tryToCreateViews; }
+            get { return this._tryToCreateViews; }
             set
             {
-                if (value.Equals(_tryToCreateViews)) return;
-                _tryToCreateViews = value;
-                OnPropertyChanged("TryToCreateViews");
+                if (value.Equals(this._tryToCreateViews)) return;
+                this._tryToCreateViews = value;
+                this.OnPropertyChanged("TryToCreateViews");
             }
         }
 
         public List<String> SelectedTables
         {
-            get { return _selectedTables; }
+            get { return this._selectedTables; }
             set
             {
-                if (value.Equals(_selectedTables)) return;
-                _selectedTables = value;
-                OnPropertyChanged("SelectedTables");
+                if (value.Equals(this._selectedTables)) return;
+                this._selectedTables = value;
+                this.OnPropertyChanged("SelectedTables");
             }
         }
 
@@ -175,16 +175,16 @@ namespace Converter
 
         public ConversionConfiguration()
         {
-            _sqlServerAddress = "";
-            _databaseName = "";
-            _integratedSecurity = true;
-            _user = "";
-            _password = "";
-            _sqLiteDatabaseFilePath = "";
-            _encryptionPassword = "";
-            _createTriggersEnforcingForeignKeys = false;
-            _tryToCreateViews = false;
-            _selectedTables = new List<String>();
+            this._sqlServerAddress = "";
+            this._databaseName = "";
+            this._integratedSecurity = true;
+            this._user = "";
+            this._password = "";
+            this._sqLiteDatabaseFilePath = "";
+            this._encryptionPassword = "";
+            this._createTriggersEnforcingForeignKeys = false;
+            this._tryToCreateViews = false;
+            this._selectedTables = new List<String>();
         }
 
         private static string GetSqlServerConnectionString(string address, string db)
@@ -206,7 +206,7 @@ namespace Converter
         [NotifyPropertyChangedInvocator]
         protected virtual void OnPropertyChanged(string propertyName)
         {
-            PropertyChangedEventHandler handler = PropertyChanged;
+            PropertyChangedEventHandler handler = this.PropertyChanged;
             if (handler != null) handler(this, new PropertyChangedEventArgs(propertyName));
         }
 

@@ -3,7 +3,7 @@ using System.IO;
 using System.Xml;
 using System.Xml.Serialization;
 
-namespace Converter
+namespace Converter.Logic
 {
     /// <summary>
     /// Contains generic methods allowing for objects to be serialized and deserialized to/from disk.

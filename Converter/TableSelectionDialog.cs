@@ -1,13 +1,9 @@
 using System;
 using System.Collections.Generic;
-using System.ComponentModel;
-using System.Data;
-using System.Drawing;
-using System.Text;
 using System.Windows.Forms;
 using DbAccess;
 
-namespace Converter
+namespace Converter.WinForms
 {
     /// <summary>
     /// The dialog allows the user to select which tables to include in the 
@@ -18,7 +14,7 @@ namespace Converter
         #region Constructors
         public TableSelectionDialog()
         {
-            InitializeComponent();
+            this.InitializeComponent();
         }
         #endregion
 
@@ -31,7 +27,7 @@ namespace Converter
             get
             {
                 List<TableSchema> res = new List<TableSchema>();
-                foreach (DataGridViewRow row in grdTables.Rows)
+                foreach (DataGridViewRow row in this.grdTables.Rows)
                 {
                     bool include = (bool)row.Cells[0].Value;
                     if (include)
@@ -53,7 +49,7 @@ namespace Converter
         /// <returns>dialog result according to user decision.</returns>
         public DialogResult ShowTables(List<TableSchema> schema, IWin32Window owner)
         {
-            UpdateGuiFromSchema(schema);
+            this.UpdateGuiFromSchema(schema);
             return this.ShowDialog(owner);
         }
         #endregion
@@ -71,7 +67,7 @@ namespace Converter
 
         private void btnDeselectAll_Click(object sender, EventArgs e)
         {
-            foreach (DataGridViewRow row in grdTables.Rows)
+            foreach (DataGridViewRow row in this.grdTables.Rows)
             {
                 // Uncheck the [V] for this row.
                 row.Cells[0].Value = false;
@@ -80,7 +76,7 @@ namespace Converter
 
         private void btnSelectAll_Click(object sender, EventArgs e)
         {
-            foreach (DataGridViewRow row in grdTables.Rows)
+            foreach (DataGridViewRow row in this.grdTables.Rows)
             {
                 // Check the [V] for this row.
                 row.Cells[0].Value = true;
@@ -91,11 +87,11 @@ namespace Converter
         #region Private Methods
         private void UpdateGuiFromSchema(List<TableSchema> schema)
         {
-            grdTables.Rows.Clear();
+            this.grdTables.Rows.Clear();
             foreach (TableSchema table in schema)
             {
-                grdTables.Rows.Add(true, table.TableName);
-                grdTables.Rows[grdTables.Rows.Count - 1].Tag = table;
+                this.grdTables.Rows.Add(true, table.TableName);
+                this.grdTables.Rows[this.grdTables.Rows.Count - 1].Tag = table;
             } // foreach
         }
         #endregion

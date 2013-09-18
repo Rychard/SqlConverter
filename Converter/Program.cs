@@ -1,13 +1,11 @@
 using System;
-using System.Collections.Generic;
 using System.Windows.Forms;
-using log4net;
 using log4net.Config;
 
 // Configure LOG4NET Using configuration file.
 [assembly: log4net.Config.XmlConfigurator(Watch = true)]
 
-namespace Converter
+namespace Converter.WinForms
 {
     static class Program
     {

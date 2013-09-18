@@ -8,8 +8,8 @@
     <ProjectGuid>{1D389047-977D-4278-8357-AC0AC751B95E}</ProjectGuid>
     <OutputType>WinExe</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>Converter</RootNamespace>
-    <AssemblyName>Converter</AssemblyName>
+    <RootNamespace>Converter.WinForms</RootNamespace>
+    <AssemblyName>Converter.WinForms</AssemblyName>
     <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
     <FileUpgradeFlags>
     </FileUpgradeFlags>
@@ -89,6 +89,7 @@
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\log4net.dll</HintPath>
     </Reference>
+    <Reference Include="Microsoft.QualityTools.Testing.Fakes, Version=11.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL" />
     <Reference Include="System" />
     <Reference Include="System.Data" />
     <Reference Include="System.Data.SQLite, Version=1.0.65.0, Culture=neutral, PublicKeyToken=db937bc2d44ff139, processorArchitecture=x86">
@@ -104,8 +105,6 @@
     <Compile Include="..\SolutionInfo.cs">
       <Link>Properties\SolutionInfo.cs</Link>
     </Compile>
-    <Compile Include="ConfigurationManager.cs" />
-    <Compile Include="ConversionConfiguration.cs" />
     <Compile Include="MainForm.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -113,8 +112,6 @@
       <DependentUpon>MainForm.cs</DependentUpon>
     </Compile>
     <Compile Include="Program.cs" />
-    <Compile Include="Properties\Annotations.cs" />
-    <Compile Include="SerializationHelperXml.cs" />
     <Compile Include="TableSelectionDialog.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -142,8 +139,12 @@
     <None Include="App.config" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\Converter.Logic\Converter.Logic.csproj">
+      <Project>{dcd66f3c-226e-4a3c-9fe5-670905a46c7c}</Project>
+      <Name>Converter.Logic</Name>
+    </ProjectReference>
     <ProjectReference Include="..\DbAccess\DbAccess.csproj">
-      <Project>{23AAF1EF-2EB6-43AD-8103-A687F04A7288}</Project>
+      <Project>{23aaf1ef-2eb6-43ad-8103-a687f04a7288}</Project>
       <Name>DbAccess</Name>
     </ProjectReference>
   </ItemGroup>
@@ -174,7 +175,7 @@
   -->
   <ProjectExtensions>
     <VisualStudio>
-      <UserProperties Reset="1" AssemblyVersion="1" AssemblyFileVersion="1" StartDate="20080613" />
+      <UserProperties StartDate="20080613" AssemblyFileVersion="1" AssemblyVersion="1" Reset="1" />
     </VisualStudio>
   </ProjectExtensions>
 </Project>

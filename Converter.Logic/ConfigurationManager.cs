@@ -1,10 +1,6 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel;
-using System.Linq;
-using System.Text;
 
-namespace Converter
+namespace Converter.Logic
 {
     public class ConfigurationManager
     {
@@ -12,12 +8,12 @@ namespace Converter
 
         public ConversionConfiguration CurrentConfiguration
         {
-            get { return _currentConfiguration; }
+            get { return this._currentConfiguration; }
             set
             {
-                _currentConfiguration = value;
+                this._currentConfiguration = value;
                 
-                _currentConfiguration.PropertyChanged += delegate { this.OnConfigurationChanged(); };
+                this._currentConfiguration.PropertyChanged += delegate { this.OnConfigurationChanged(); };
                 
                 // We should raise this event manually.
                 // Assigning a new value to this property, by definition, is a configuration change.
@@ -38,7 +34,7 @@ namespace Converter
 
         public ConfigurationManager()
         {
-            CurrentConfiguration = new ConversionConfiguration();
+            this.CurrentConfiguration = new ConversionConfiguration();
         }
         
     }
