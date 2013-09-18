@@ -797,7 +797,7 @@ namespace DbAccess
                 List<string> tblschema = new List<string>();
 
                 // This command will read the names of all tables in the database
-                SqlCommand cmd = new SqlCommand(@"select * from INFORMATION_SCHEMA.TABLES  where TABLE_TYPE = 'BASE TABLE'", conn);
+                SqlCommand cmd = new SqlCommand(@"select * from INFORMATION_SCHEMA.TABLES  where TABLE_TYPE = 'BASE TABLE' ORDER BY TABLE_SCHEMA ASC, TABLE_NAME ASC", conn);
                 using (SqlDataReader reader = cmd.ExecuteReader())
                 {
                     while (reader.Read())
