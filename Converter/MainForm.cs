@@ -98,35 +98,16 @@ namespace Converter.WinForms
 
         private void btnSet_Click(object sender, EventArgs e)
         {
-            try
-            {
-                ConversionConfiguration config = this._manager.CurrentConfiguration;
-                string connectionString = config.ConnectionString;
-                using (SqlConnection conn = new SqlConnection(connectionString))
-                {
-                    conn.Open();
+            var databases = DatabaseHelper.GetDatabases(_manager.CurrentConfiguration).ToArray();
 
-                    // Get the names of all DBs in the database server.
-                    SqlCommand query = new SqlCommand(@"select distinct [name] from sysdatabases", conn);
-                    using (SqlDataReader reader = query.ExecuteReader())
-                    {
-                        this.cboDatabases.Items.Clear();
-                        while (reader.Read())
-                        {
-                            this.cboDatabases.Items.Add((string)reader[0]);
-                        }
-                        if (this.cboDatabases.Items.Count > 0)
-                        {
-                            this.cboDatabases.SelectedIndex = 0;
-                        }
-                    }
-                }
-                this.pbrProgress.Value = 0;
-                this.AddMessage(String.Format("Connected to SQL Server ({0})", config.SqlServerAddress));
-            }
-            catch (Exception ex)
+            foreach (var database in databases)
             {
-                MessageBox.Show(this, ex.Message, "Failed To Connect", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                cboDatabases.Items.Add(database);
+            }
+
+            if (cboDatabases.Items.Count > 0)
+            {
+                cboDatabases.SelectedIndex = 0;
             }
         }
 

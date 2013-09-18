@@ -802,14 +802,12 @@ namespace DbAccess
                 {
                     while (reader.Read())
                     {
-                        if (reader["TABLE_NAME"] == DBNull.Value)
-                            continue;
-                        if (reader["TABLE_SCHEMA"] == DBNull.Value)
-                            continue;
-                        tableNames.Add((string)reader["TABLE_NAME"]);
-                        tblschema.Add((string)reader["TABLE_SCHEMA"]);
-                    } // while
-                } // using
+                        if (reader["TABLE_NAME"] == DBNull.Value) { continue; }
+                        if (reader["TABLE_SCHEMA"] == DBNull.Value) { continue; }
+                        tableNames.Add((String)reader["TABLE_NAME"]);
+                        tblschema.Add((String)reader["TABLE_SCHEMA"]);
+                    }
+                }
 
                 // Next step is to use ADO APIs to query the schema of each table.
                 int count = 0;
@@ -825,8 +823,8 @@ namespace DbAccess
                     handler(false, true, (int)(count * 50.0 / tableNames.Count), "Parsed table " + tname);
 
                     _log.Debug("parsed table schema for [" + tname + "]");
-                } // foreach
-            } // using
+                }
+            }
 
             _log.Debug("finished parsing all tables in SQL Server schema");
 

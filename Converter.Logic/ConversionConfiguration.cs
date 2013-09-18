@@ -199,6 +199,8 @@ namespace Converter.Logic
         }
 
 
+
+
         #region INotifyPropertyChanged
 
         public event PropertyChangedEventHandler PropertyChanged;

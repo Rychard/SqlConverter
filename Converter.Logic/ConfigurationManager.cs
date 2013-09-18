@@ -5,7 +5,6 @@ namespace Converter.Logic
     public class ConfigurationManager
     {
         private ConversionConfiguration _currentConfiguration;
-
         public ConversionConfiguration CurrentConfiguration
         {
             get { return this._currentConfiguration; }
@@ -22,7 +21,6 @@ namespace Converter.Logic
         }
 
         public event EventHandler ConfigurationChanged;
-
         protected virtual void OnConfigurationChanged()
         {
             EventHandler handler = this.ConfigurationChanged;
