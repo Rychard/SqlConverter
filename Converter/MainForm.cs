@@ -14,7 +14,7 @@ namespace Converter.WinForms
     {
         private bool _shouldExit;
         private bool _isLoading;
-        private Converter.Logic.ConfigurationManager _manager;
+        private ConfigurationManager _manager;
 
         public MainForm()
         {
@@ -144,7 +144,7 @@ namespace Converter.WinForms
             this.UpdateSensitivity();
 
             String version = Assembly.GetExecutingAssembly().GetName().Version.ToString();
-            this.Text = "SQL Server To SQLite DB Converter (" + version + ")";
+            Text = "SQL Server To SQLite DB Converter (" + version + ")";
         }
 
         private void txtSqlAddress_TextChanged(object sender, EventArgs e)
@@ -239,7 +239,7 @@ namespace Converter.WinForms
             ConversionConfiguration config = this._manager.CurrentConfiguration;
             string sqlConnString = config.ConnectionString;
 
-            this.Cursor = Cursors.WaitCursor;
+            Cursor = Cursors.WaitCursor;
             SqlConversionHandler handler = this.OnSqlConversionHandler;
             SqlTableSelectionHandler selectionHandler = this.OnSqlTableSelectionHandler;
             FailedViewDefinitionHandler viewFailureHandler = this.OnFailedViewDefinitionHandler;
@@ -317,7 +317,7 @@ namespace Converter.WinForms
                                          }
 
                                          this.btnStart.Enabled = true;
-                                         this.Cursor = Cursors.Default;
+                                         Cursor = Cursors.Default;
                                          this.UpdateSensitivity();
 
                                          if (success)

@@ -3,7 +3,7 @@ using System.Windows.Forms;
 using log4net.Config;
 
 // Configure LOG4NET Using configuration file.
-[assembly: log4net.Config.XmlConfigurator(Watch = true)]
+[assembly: XmlConfigurator(Watch = true)]
 
 namespace Converter.WinForms
 {

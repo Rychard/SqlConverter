@@ -50,7 +50,7 @@ namespace Converter.WinForms
         public DialogResult ShowTables(List<TableSchema> schema, IWin32Window owner)
         {
             this.UpdateGuiFromSchema(schema);
-            return this.ShowDialog(owner);
+            return ShowDialog(owner);
         }
         #endregion
 

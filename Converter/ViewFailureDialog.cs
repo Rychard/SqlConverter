@@ -17,7 +17,7 @@ namespace Converter.WinForms
             set
             {
                 this._view = value;
-                this.Text = "SQL Error: "+this._view.ViewName;
+                Text = "SQL Error: "+this._view.ViewName;
                 this.txtSQL.Text = this._view.ViewSQL;
             }
         }
@@ -30,12 +30,12 @@ namespace Converter.WinForms
 
         private void btnOK_Click(object sender, EventArgs e)
         {
-            this.DialogResult = DialogResult.OK;
+            DialogResult = DialogResult.OK;
         }
 
         private void btnCancel_Click(object sender, EventArgs e)
         {
-            this.DialogResult = DialogResult.Cancel;
+            DialogResult = DialogResult.Cancel;
         }
 
         private ViewSchema _view;
