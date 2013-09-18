@@ -57,7 +57,6 @@ namespace Converter
             this.saveToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.toolStripSeparator1 = new System.Windows.Forms.ToolStripSeparator();
             this.exitToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-            this.txtValues = new System.Windows.Forms.TextBox();
             this.menuStrip1.SuspendLayout();
             this.SuspendLayout();
             // 
@@ -134,7 +133,6 @@ namespace Converter
             // cboDatabases
             // 
             this.cboDatabases.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
-            this.cboDatabases.Enabled = false;
             this.cboDatabases.FormattingEnabled = true;
             this.cboDatabases.Location = new System.Drawing.Point(151, 53);
             this.cboDatabases.Name = "cboDatabases";
@@ -273,7 +271,7 @@ namespace Converter
             this.lbMessages.IntegralHeight = false;
             this.lbMessages.Location = new System.Drawing.Point(12, 184);
             this.lbMessages.Name = "lbMessages";
-            this.lbMessages.Size = new System.Drawing.Size(274, 189);
+            this.lbMessages.Size = new System.Drawing.Size(652, 189);
             this.lbMessages.TabIndex = 21;
             // 
             // menuStrip1
@@ -302,7 +300,7 @@ namespace Converter
             // 
             this.newToolStripMenuItem.Name = "newToolStripMenuItem";
             this.newToolStripMenuItem.ShortcutKeys = ((System.Windows.Forms.Keys)((System.Windows.Forms.Keys.Control | System.Windows.Forms.Keys.N)));
-            this.newToolStripMenuItem.Size = new System.Drawing.Size(152, 22);
+            this.newToolStripMenuItem.Size = new System.Drawing.Size(146, 22);
             this.newToolStripMenuItem.Text = "&New";
             this.newToolStripMenuItem.Click += new System.EventHandler(this.ToolStripMenuItemNew);
             // 
@@ -310,7 +308,7 @@ namespace Converter
             // 
             this.openToolStripMenuItem.Name = "openToolStripMenuItem";
             this.openToolStripMenuItem.ShortcutKeys = ((System.Windows.Forms.Keys)((System.Windows.Forms.Keys.Control | System.Windows.Forms.Keys.O)));
-            this.openToolStripMenuItem.Size = new System.Drawing.Size(152, 22);
+            this.openToolStripMenuItem.Size = new System.Drawing.Size(146, 22);
             this.openToolStripMenuItem.Text = "&Open";
             this.openToolStripMenuItem.Click += new System.EventHandler(this.ToolStripMenuItemOpen);
             // 
@@ -318,7 +316,7 @@ namespace Converter
             // 
             this.saveToolStripMenuItem.Name = "saveToolStripMenuItem";
             this.saveToolStripMenuItem.ShortcutKeys = ((System.Windows.Forms.Keys)((System.Windows.Forms.Keys.Control | System.Windows.Forms.Keys.S)));
-            this.saveToolStripMenuItem.Size = new System.Drawing.Size(152, 22);
+            this.saveToolStripMenuItem.Size = new System.Drawing.Size(146, 22);
             this.saveToolStripMenuItem.Text = "&Save";
             this.saveToolStripMenuItem.Click += new System.EventHandler(this.ToolStripMenuItemSave);
             // 
@@ -331,24 +329,15 @@ namespace Converter
             // 
             this.exitToolStripMenuItem.Name = "exitToolStripMenuItem";
             this.exitToolStripMenuItem.ShortcutKeys = ((System.Windows.Forms.Keys)((System.Windows.Forms.Keys.Control | System.Windows.Forms.Keys.Q)));
-            this.exitToolStripMenuItem.Size = new System.Drawing.Size(152, 22);
+            this.exitToolStripMenuItem.Size = new System.Drawing.Size(146, 22);
             this.exitToolStripMenuItem.Text = "E&xit";
             this.exitToolStripMenuItem.Click += new System.EventHandler(this.ToolStripMenuItemExit);
-            // 
-            // txtValues
-            // 
-            this.txtValues.Location = new System.Drawing.Point(292, 184);
-            this.txtValues.Multiline = true;
-            this.txtValues.Name = "txtValues";
-            this.txtValues.Size = new System.Drawing.Size(369, 189);
-            this.txtValues.TabIndex = 23;
             // 
             // MainForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(676, 426);
-            this.Controls.Add(this.txtValues);
             this.Controls.Add(this.lbMessages);
             this.Controls.Add(this.cbxCreateViews);
             this.Controls.Add(this.cbxTriggers);
@@ -416,7 +405,6 @@ namespace Converter
         private System.Windows.Forms.ToolStripMenuItem saveToolStripMenuItem;
         private System.Windows.Forms.ToolStripSeparator toolStripSeparator1;
         private System.Windows.Forms.ToolStripMenuItem exitToolStripMenuItem;
-        private System.Windows.Forms.TextBox txtValues;
     }
 }
 

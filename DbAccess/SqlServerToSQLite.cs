@@ -51,11 +51,7 @@ namespace DbAccess
         /// tables to convert</param>
         /// <remarks>The method continues asynchronously in the background and the caller returned
         /// immediatly.</remarks>
-        public static void ConvertSqlServerToSQLiteDatabase(string sqlServerConnString,
-            string sqlitePath, string password, SqlConversionHandler handler,
-            SqlTableSelectionHandler selectionHandler,
-            FailedViewDefinitionHandler viewFailureHandler,
-            bool createTriggers, bool createViews)
+        public static void ConvertSqlServerToSQLiteDatabase(string sqlServerConnString, string sqlitePath, string password, SqlConversionHandler handler, SqlTableSelectionHandler selectionHandler, FailedViewDefinitionHandler viewFailureHandler, bool createTriggers, bool createViews)
         {
             // Clear cancelled flag
             _cancelled = false;
@@ -91,15 +87,13 @@ namespace DbAccess
         /// <param name="handler">A handler to handle progress notifications.</param>
         /// <param name="selectionHandler">The selection handler which allows the user to select which tables to 
         /// convert.</param>
-        private static void ConvertSqlServerDatabaseToSQLiteFile(
-            string sqlConnString, string sqlitePath, string password, SqlConversionHandler handler,
-            SqlTableSelectionHandler selectionHandler,
-            FailedViewDefinitionHandler viewFailureHandler,
-            bool createTriggers, bool createViews)
+        private static void ConvertSqlServerDatabaseToSQLiteFile(string sqlConnString, string sqlitePath, string password, SqlConversionHandler handler, SqlTableSelectionHandler selectionHandler, FailedViewDefinitionHandler viewFailureHandler, bool createTriggers, bool createViews)
         {
             // Delete the target file if it exists already.
             if (File.Exists(sqlitePath))
+            {
                 File.Delete(sqlitePath);
+            }
 
             // Read the schema of the SQL Server database into a memory structure
             DatabaseSchema ds = ReadSqlServerSchema(sqlConnString, handler, selectionHandler);
@@ -112,8 +106,9 @@ namespace DbAccess
 
             // Add triggers based on foreign key constraints
             if (createTriggers)
+            {
                 AddTriggersForForeignKeys(sqlitePath, ds.Tables, password, handler);
-
+            }
         }
 
         /// <summary>
@@ -124,9 +119,7 @@ namespace DbAccess
         /// <param name="schema">The schema of the SQL Server database.</param>
         /// <param name="password">The password to use for encrypting the file</param>
         /// <param name="handler">A handler to handle progress notifications.</param>
-        private static void CopySqlServerRowsToSQLiteDB(
-            string sqlConnString, string sqlitePath, List<TableSchema> schema,
-            string password, SqlConversionHandler handler)
+        private static void CopySqlServerRowsToSQLiteDB(string sqlConnString, string sqlitePath, List<TableSchema> schema, string password, SqlConversionHandler handler)
         {
             CheckCancelled();
             handler(false, true, 0, "Preparing to insert tables...");
@@ -454,9 +447,7 @@ namespace DbAccess
         /// <param name="schema">The schema of the SQL server database.</param>
         /// <param name="password">The password to use for encrypting the DB or null if non is needed.</param>
         /// <param name="handler">A handle for progress notifications.</param>
-        private static void CreateSQLiteDatabase(string sqlitePath, DatabaseSchema schema, string password,
-            SqlConversionHandler handler,
-            FailedViewDefinitionHandler viewFailureHandler, bool createViews)
+        private static void CreateSQLiteDatabase(string sqlitePath, DatabaseSchema schema, string password, SqlConversionHandler handler, FailedViewDefinitionHandler viewFailureHandler, bool createViews)
         {
             _log.Debug("Creating SQLite database...");
 
@@ -794,8 +785,7 @@ namespace DbAccess
         /// <param name="selectionHandler">The selection handler which allows the user to select 
         /// which tables to convert.</param>
         /// <returns>database schema objects for every table/view in the SQL Server database.</returns>
-        private static DatabaseSchema ReadSqlServerSchema(string connString, SqlConversionHandler handler,
-            SqlTableSelectionHandler selectionHandler)
+        private static DatabaseSchema ReadSqlServerSchema(string connString, SqlConversionHandler handler, SqlTableSelectionHandler selectionHandler)
         {
             // First step is to read the names of all tables in the database
             List<TableSchema> tables = new List<TableSchema>();
@@ -845,8 +835,10 @@ namespace DbAccess
             {
                 List<TableSchema> updated = selectionHandler(tables);
                 if (updated != null)
+                {
                     tables = updated;
-            } // if
+                }
+            }
 
             Regex removedbo = new Regex(@"dbo\.", RegexOptions.Compiled | RegexOptions.IgnoreCase);
 
@@ -1259,8 +1251,10 @@ namespace DbAccess
         {
             SQLiteConnectionStringBuilder builder = new SQLiteConnectionStringBuilder();
             builder.DataSource = sqlitePath;
-            if (password != null)
+            if (!String.IsNullOrWhiteSpace(password))
+            {
                 builder.Password = password;
+            }
             builder.PageSize = 4096;
             builder.UseUTF16Encoding = true;
             string connstring = builder.ConnectionString;

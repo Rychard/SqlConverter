@@ -16,7 +16,12 @@ namespace Converter
             set
             {
                 _currentConfiguration = value;
+                
                 _currentConfiguration.PropertyChanged += delegate { this.OnConfigurationChanged(); };
+                
+                // We should raise this event manually.
+                // Assigning a new value to this property, by definition, is a configuration change.
+                this.OnConfigurationChanged();
             }
         }
 
