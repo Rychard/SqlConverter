@@ -1,8 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Data.SqlClient;
-using System.Linq;
-using System.Text;
 
 namespace Converter.Logic
 {
@@ -12,14 +10,14 @@ namespace Converter.Logic
         {
             try
             {
-                string connectionString = config.ConnectionString;
-                List<String> databases = new List<String>();
-                using (SqlConnection conn = new SqlConnection(connectionString))
+                String connectionString = config.ConnectionString;
+                var databases = new List<String>();
+                using (var conn = new SqlConnection(connectionString))
                 {
                     conn.Open();
 
                     // Get the names of all DBs in the database server.
-                    SqlCommand query = new SqlCommand(@"select distinct [name] from sysdatabases", conn);
+                    var query = new SqlCommand(@"SELECT DISTINCT [name] FROM sysdatabases", conn);
                     using (SqlDataReader reader = query.ExecuteReader())
                     {
                         while (reader.Read())
