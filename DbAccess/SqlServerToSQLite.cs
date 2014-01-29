@@ -165,8 +165,7 @@ namespace DbAccess
                                     {
                                         CheckCancelled();
                                         tx.Commit();
-                                        handler(false, true, (int)(100.0 * i / schema.Count),
-                                            "Added " + counter + " rows to table " + schema[i].TableName + " so far");
+                                        handler(false, true, (int)(100.0 * i / schema.Count), "Added " + counter + " rows to table " + schema[i].TableName + " so far"); 
                                         tx = sqconn.BeginTransaction();
                                     }
                                 } // while
