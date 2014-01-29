@@ -1,5 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Text;
 
 namespace DbAccess
@@ -13,7 +12,6 @@ namespace DbAccess
 
             foreach (ForeignKeySchema fks in dt.ForeignKeys)
             {
-                StringBuilder sb = new StringBuilder();
                 result.Add(GenerateInsertTrigger(fks));
                 result.Add(GenerateUpdateTrigger(fks));
                 result.Add(GenerateDeleteTrigger(fks));
@@ -28,7 +26,7 @@ namespace DbAccess
 
         public static TriggerSchema GenerateInsertTrigger(ForeignKeySchema fks)
         {
-            TriggerSchema trigger = new TriggerSchema();
+            var trigger = new TriggerSchema();
             trigger.Name = MakeTriggerName(fks, "fki");
             trigger.Type = TriggerType.Before;
             trigger.Event = TriggerEvent.Insert;
@@ -51,7 +49,7 @@ namespace DbAccess
 
         public static TriggerSchema GenerateUpdateTrigger(ForeignKeySchema fks)
         {
-            TriggerSchema trigger = new TriggerSchema();
+            var trigger = new TriggerSchema();
             trigger.Name = MakeTriggerName(fks, "fku");
             trigger.Type = TriggerType.Before;
             trigger.Event = TriggerEvent.Update;
@@ -76,7 +74,7 @@ namespace DbAccess
 
         public static TriggerSchema GenerateDeleteTrigger(ForeignKeySchema fks)
         {
-            TriggerSchema trigger = new TriggerSchema();
+            var trigger = new TriggerSchema();
             trigger.Name = MakeTriggerName(fks, "fkd");
             trigger.Type = TriggerType.Before;
             trigger.Event = TriggerEvent.Delete;
