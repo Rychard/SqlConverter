@@ -303,9 +303,22 @@ namespace Converter.WinForms
 
                                          if (success)
                                          {
-                                             MessageBox.Show(this, msg, "Conversion Finished", MessageBoxButtons.OK, MessageBoxIcon.Information);
                                              this.pbrProgress.Value = 0;
                                              this.AddMessage("Conversion Finished.");
+
+                                             // If a filename is set for an archive, then compress the database.
+                                             var config = this._manager.CurrentConfiguration;
+                                             if (!String.IsNullOrWhiteSpace(config.SqLiteDatabaseFilePathCompressed))
+                                             {
+                                                 String filename = Path.GetFileName(config.SqLiteDatabaseFilePath);
+                                                 var contents = new Dictionary<String, String>
+                                                 {
+                                                     { Path.GetFileName(config.SqLiteDatabaseFilePath), config.SqLiteDatabaseFilePath }
+                                                 };
+
+                                                 ZipHelper.CreateZip(config.SqLiteDatabaseFilePathCompressed, contents);
+                                             }
+                                             MessageBox.Show(this, msg, "Conversion Finished", MessageBoxButtons.OK, MessageBoxIcon.Information);
                                          }
                                          else
                                          {
