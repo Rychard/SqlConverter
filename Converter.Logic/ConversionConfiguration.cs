@@ -15,6 +15,7 @@ namespace Converter.Logic
         private String _user;
         private String _password;
         private String _sqLiteDatabaseFilePath;
+        private String _sqLiteDatabaseFilePathCompressed;
         private String _encryptionPassword;
         private Boolean _createTriggersEnforcingForeignKeys;
         private Boolean _tryToCreateViews;
@@ -87,6 +88,17 @@ namespace Converter.Logic
                 if (value == this._sqLiteDatabaseFilePath) return;
                 this._sqLiteDatabaseFilePath = value;
                 this.OnPropertyChanged("SqLiteDatabaseFilePath");
+            }
+        }
+
+        public String SqLiteDatabaseFilePathCompressed
+        {
+            get { return this._sqLiteDatabaseFilePathCompressed; }
+            set
+            {
+                if (value == this._sqLiteDatabaseFilePathCompressed) return;
+                this._sqLiteDatabaseFilePathCompressed = value;
+                this.OnPropertyChanged("SqLiteDatabaseFilePathCompressed");
             }
         }
 
@@ -181,6 +193,7 @@ namespace Converter.Logic
             this._user = "";
             this._password = "";
             this._sqLiteDatabaseFilePath = "";
+            this._sqLiteDatabaseFilePathCompressed = "";
             this._encryptionPassword = "";
             this._createTriggersEnforcingForeignKeys = false;
             this._tryToCreateViews = false;
@@ -197,9 +210,6 @@ namespace Converter.Logic
             string res = @"Data Source=" + address.Trim() + ";Initial Catalog=" + db.Trim() + ";User ID=" + user.Trim() + ";Password=" + pass.Trim();
             return res;
         }
-
-
-
 
         #region INotifyPropertyChanged
 
