@@ -1,14 +1,14 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 2012
+# Visual Studio 2013
+VisualStudioVersion = 12.0.30501.0
+MinimumVisualStudioVersion = 10.0.40219.1
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "SolutionItems", "SolutionItems", "{BF532AE3-9E18-4534-BD02-F0DA395FB642}"
 	ProjectSection(SolutionItems) = preProject
 		SolutionInfo.cs = SolutionInfo.cs
 	EndProjectSection
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Converter.WinForms", "Converter\Converter.WinForms.csproj", "{1D389047-977D-4278-8357-AC0AC751B95E}"
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DbAccess", "DbAccess\DbAccess.csproj", "{23AAF1EF-2EB6-43AD-8103-A687F04A7288}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Converter.Logic", "Converter.Logic\Converter.Logic.csproj", "{DCD66F3C-226E-4A3C-9FE5-670905A46C7C}"
 EndProject
@@ -28,14 +28,6 @@ Global
 		{1D389047-977D-4278-8357-AC0AC751B95E}.Release|Any CPU.Build.0 = Release|Any CPU
 		{1D389047-977D-4278-8357-AC0AC751B95E}.Release|x86.ActiveCfg = Release|x86
 		{1D389047-977D-4278-8357-AC0AC751B95E}.Release|x86.Build.0 = Release|x86
-		{23AAF1EF-2EB6-43AD-8103-A687F04A7288}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{23AAF1EF-2EB6-43AD-8103-A687F04A7288}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{23AAF1EF-2EB6-43AD-8103-A687F04A7288}.Debug|x86.ActiveCfg = Debug|x86
-		{23AAF1EF-2EB6-43AD-8103-A687F04A7288}.Debug|x86.Build.0 = Debug|x86
-		{23AAF1EF-2EB6-43AD-8103-A687F04A7288}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{23AAF1EF-2EB6-43AD-8103-A687F04A7288}.Release|Any CPU.Build.0 = Release|Any CPU
-		{23AAF1EF-2EB6-43AD-8103-A687F04A7288}.Release|x86.ActiveCfg = Release|x86
-		{23AAF1EF-2EB6-43AD-8103-A687F04A7288}.Release|x86.Build.0 = Release|x86
 		{DCD66F3C-226E-4A3C-9FE5-670905A46C7C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{DCD66F3C-226E-4A3C-9FE5-670905A46C7C}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{DCD66F3C-226E-4A3C-9FE5-670905A46C7C}.Debug|x86.ActiveCfg = Debug|Any CPU

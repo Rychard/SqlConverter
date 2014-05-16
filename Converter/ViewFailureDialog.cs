@@ -1,6 +1,6 @@
 using System;
 using System.Windows.Forms;
-using DbAccess;
+using Converter.Logic.Schema;
 
 namespace Converter.WinForms
 {

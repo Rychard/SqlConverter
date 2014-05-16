@@ -143,10 +143,6 @@
       <Project>{dcd66f3c-226e-4a3c-9fe5-670905a46c7c}</Project>
       <Name>Converter.Logic</Name>
     </ProjectReference>
-    <ProjectReference Include="..\DbAccess\DbAccess.csproj">
-      <Project>{23aaf1ef-2eb6-43ad-8103-a687f04a7288}</Project>
-      <Name>DbAccess</Name>
-    </ProjectReference>
   </ItemGroup>
   <ItemGroup>
     <BootstrapperPackage Include="Microsoft.Net.Client.3.5">
@@ -175,7 +171,7 @@
   -->
   <ProjectExtensions>
     <VisualStudio>
-      <UserProperties StartDate="20080613" AssemblyFileVersion="1" AssemblyVersion="1" Reset="1" />
+      <UserProperties Reset="1" AssemblyVersion="1" AssemblyFileVersion="1" StartDate="20080613" />
     </VisualStudio>
   </ProjectExtensions>
 </Project>

@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Windows.Forms;
-using DbAccess;
+using Converter.Logic.Schema;
 
 namespace Converter.WinForms
 {

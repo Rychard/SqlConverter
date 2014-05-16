@@ -1,12 +1,13 @@
 using System;
 using System.Collections.Generic;
-using System.Data.SqlClient;
 using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Windows.Forms;
 using Converter.Logic;
-using DbAccess;
+using Converter.Logic.Configuration;
+using Converter.Logic.Helpers;
+using Converter.Logic.Schema;
 
 namespace Converter.WinForms
 {
