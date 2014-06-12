@@ -5,7 +5,7 @@ using Converter.Logic.Configuration;
 
 namespace Converter.Logic.Helpers
 {
-    public class DatabaseHelper
+    public static class DatabaseHelper
     {
         public static List<String> GetDatabases(ConversionConfiguration config)
         {
