@@ -68,6 +68,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="EventArguments.cs" />
     <Compile Include="Schema\ColumnSchema.cs" />
     <Compile Include="Configuration\ConfigurationManager.cs" />
     <Compile Include="Configuration\ConversionConfiguration.cs" />
@@ -82,6 +83,7 @@
     <Compile Include="Helpers\SerializationHelperXml.cs" />
     <Compile Include="Schema\TableSchema.cs" />
     <Compile Include="Schema\ViewSchema.cs" />
+    <Compile Include="SqlServerSchemaReader.cs" />
     <Compile Include="SqlServertoSQlite.cs" />
     <Compile Include="Triggers\TriggerBuilder.cs" />
     <Compile Include="Triggers\TriggerEvent.cs" />

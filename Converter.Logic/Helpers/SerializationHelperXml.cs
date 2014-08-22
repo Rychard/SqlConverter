@@ -34,6 +34,7 @@ namespace Converter.Logic.Helpers
             }
             catch (Exception ex)
             {
+                SqlServerToSQLite.Log.Error("Error in \"XmlSerialize\"", ex);
                 return false;
             }
         }
@@ -76,6 +77,7 @@ namespace Converter.Logic.Helpers
             }
             catch (Exception ex)
             {
+                SqlServerToSQLite.Log.Error("Error in \"TryXmlSerialize\"", ex);
                 success = false;
                 return null;
             }

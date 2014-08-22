@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -21,9 +22,16 @@ namespace Converter.Logic
     /// <remarks>The class knows how to convert table and index structures only.</remarks>
     public class SqlServerToSQLite
     {
-        private static readonly Regex _keyRx = new Regex(@"(([a-zA-Z_äöüÄÖÜß0-9\.]|(\s+))+)(\(\-\))?");
         private static readonly Regex _defaultValueRx = new Regex(@"\(N(\'.*\')\)");
         private static readonly ILog _log = LogManager.GetLogger(typeof(SqlServerToSQLite));
+
+        /// <summary>
+        /// Gets a reference to the log.
+        /// </summary>
+        public static ILog Log
+        {
+            get { return _log; }
+        }
         
         private static bool _isActive = false;
         private static bool _cancelled = false;
@@ -89,26 +97,65 @@ namespace Converter.Logic
         /// <param name="selectionHandler">The selection handler which allows the user to select which tables to convert.</param>
         private static void ConvertSqlServerDatabaseToSQLiteFile(string sqlConnString, string sqlitePath, string password, SqlConversionHandler handler, SqlTableSelectionHandler selectionHandler, FailedViewDefinitionHandler viewFailureHandler, bool createTriggers, bool createViews)
         {
-            // Delete the target file if it exists already.
-            if (File.Exists(sqlitePath))
-            {
-                File.Delete(sqlitePath);
-            }
+            // Delete the destination file (only if it exists)
+            DeleteFile(sqlitePath);
+
+            SqlServerSchemaReader schemaReader = new SqlServerSchemaReader(sqlConnString, Log);
+
+
+            schemaReader.TableSchemaReaderProgressChanged += delegate(object sender, TableSchemaReaderProgressChangedEventArgs args)
+                                                             {
+                                                                 int total = args.TablesProcessed + args.TablesRemaining;
+                                                                 int percentage = (int)((args.TablesProcessed / (Double)total) * 100);
+                                                                 String msg = String.Format("Parsed table {0}", args.LastProcessedTable.TableName);
+                                                                 handler(false, false, percentage, msg);
+                                                             };
+
+            schemaReader.ViewSchemaReaderProgressChanged += delegate(object sender, ViewSchemaReaderProgressChangedEventArgs args)
+                                                            {
+                                                                int total = args.ViewsProcessed + args.ViewsRemaining;
+                                                                int percentage = (int)((args.ViewsProcessed / (Double)total) * 100);
+                                                                String msg = String.Format("Parsed view {0}", args.LastProcessedView.ViewName);
+                                                                handler(false, false, percentage, msg);
+                                                            };
+
+            schemaReader.PopulateTableSchema();
+            schemaReader.PopulateViewSchema();
+
+            var includeSchema = selectionHandler(schemaReader.Tables);
+            schemaReader.TablesIncludeSchema = includeSchema;
+
+            var includeData = selectionHandler(includeSchema);
+            schemaReader.TablesIncludeData = includeData;
 
             // Read the schema of the SQL Server database into a memory structure
-            DatabaseSchema ds = ReadSqlServerSchema(sqlConnString, handler, selectionHandler);
+            DatabaseSchema ds = schemaReader.GetDatabaseSchema();
 
             // Create the SQLite database and apply the schema
             CreateSQLiteDatabase(sqlitePath, ds, password, handler, viewFailureHandler, createViews);
 
             // Copy all rows from SQL Server tables to the newly created SQLite database
-            CopySqlServerRowsToSQLiteDB(sqlConnString, sqlitePath, ds.Tables, password, handler);
+            var tablesToCopy = ds.Tables.Where(obj => includeData.Any(include => include.TableName == obj.TableName)).ToList();
+            CopySqlServerRowsToSQLiteDB(sqlConnString, sqlitePath, tablesToCopy, password, handler);
 
             // Add triggers based on foreign key constraints
             if (createTriggers)
             {
                 AddTriggersForForeignKeys(sqlitePath, ds.Tables, password, handler);
             }
+        }
+
+        /// <summary>
+        /// Deletes the specified file.
+        /// </summary>
+        /// <returns>Returns a boolean value indicating whether the file still exists.</returns>
+        private static Boolean DeleteFile(String filepath)
+        {
+            if (File.Exists(filepath))
+            {
+                File.Delete(filepath);
+            }
+            return File.Exists(filepath);
         }
 
         /// <summary>
@@ -290,6 +337,7 @@ namespace Converter.Logic
             }
             catch (Exception ex)
             {
+                SqlServerToSQLite.Log.Error("Error in \"ParseStringAsGuid\"", ex);
                 return Guid.Empty;
             }
         }
@@ -527,6 +575,7 @@ namespace Converter.Logic
             }
             catch (SQLiteException ex)
             {
+                SqlServerToSQLite.Log.Error("Error in \"AddSQLiteView\"", ex);
                 tx.Rollback();
 
                 if (handler != null)
@@ -802,145 +851,11 @@ namespace Converter.Logic
                 return StripParens(m.Groups[1].Value);
             }
         }
-
-        /// <summary>
-        /// Reads the entire SQL Server DB schema using the specified connection string.
-        /// </summary>
-        /// <param name="connString">The connection string used for reading SQL Server schema.</param>
-        /// <param name="handler">A handler for progress notifications.</param>
-        /// <param name="selectionHandler">The selection handler which allows the user to select 
-        /// which tables to convert.</param>
-        /// <returns>database schema objects for every table/view in the SQL Server database.</returns>
-        private static DatabaseSchema ReadSqlServerSchema(string connString, SqlConversionHandler handler, SqlTableSelectionHandler selectionHandler)
-        {
-            // First step is to read the names of all tables in the database
-            var tables = new List<TableSchema>();
-
-            var tableNames = new List<String>();
-            var tblschema = new List<String>();
-
-            using (var conn = new SqlConnection(connString))
-            {
-                conn.Open();
-
-                // This command will read the names of all tables in the database
-                var cmd = new SqlCommand(@"SELECT * FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_TYPE = 'BASE TABLE' ORDER BY TABLE_SCHEMA ASC, TABLE_NAME ASC", conn);
-                using (SqlDataReader reader = cmd.ExecuteReader())
-                {
-                    while (reader.Read())
-                    {
-                        if (reader["TABLE_NAME"] == DBNull.Value) { continue; }
-                        if (reader["TABLE_SCHEMA"] == DBNull.Value) { continue; }
-                        tableNames.Add((String) reader["TABLE_NAME"]);
-                        tblschema.Add((String) reader["TABLE_SCHEMA"]);
-                    }
-                }
-            }
-
-            // Next step is to use ADO APIs to query the schema of each table.
-            Object stateLocker = new Object();
-            int count = 0;
-            var parallelResult = Parallel.For(0, tableNames.Count, i =>
-            {
-                String tname = tableNames[i];
-                String tschma = tblschema[i];
-                TableSchema ts = CreateTableSchema(connString, tname, tschma);
-                CreateForeignKeySchema(connString, ts);
-                lock (stateLocker)
-                {
-                    tables.Add(ts);
-                    count++;    
-                }
-                CheckCancelled();
-                handler(false, true, (int)(count * 50.0 / tableNames.Count), "Parsed table " + tname);
-                _log.Debug("parsed table schema for [" + tname + "]");
-            });
-
-            while (!parallelResult.IsCompleted)
-            {
-                System.Threading.Thread.Sleep(1000);
-            }
-            
-            //for (int i = 0; i < tableNames.Count; i++)
-            //{
-            //    String tname = tableNames[i];
-            //    String tschma = tblschema[i];
-
-            //    TableSchema ts = CreateTableSchema(connString, tname, tschma);
-            //    CreateForeignKeySchema(connString, ts);
-            //    tables.Add(ts);
-            //    count++;
-            //    CheckCancelled();
-            //    handler(false, true, (int)(count * 50.0 / tableNames.Count), "Parsed table " + tname);
-
-            //    _log.Debug("parsed table schema for [" + tname + "]");
-            //}
-
-            _log.Debug("finished parsing all tables in SQL Server schema");
-
-            // Allow the user a chance to select which tables to convert
-            if (selectionHandler != null)
-            {
-                List<TableSchema> updated = selectionHandler(tables);
-                if (updated != null)
-                {
-                    tables = updated;
-                }
-            }
-
-            // Continue and read all of the views in the database
-            var views = GetViews(connString, handler).ToList();
-
-            var ds = new DatabaseSchema
-            {
-                Tables = tables,
-                Views = views
-            };
-            return ds;
-        }
-
-        private static IEnumerable<ViewSchema> GetViews(String connectionString, SqlConversionHandler handler)
-        {
-            Regex removedbo = new Regex(@"dbo\.", RegexOptions.Compiled | RegexOptions.IgnoreCase);
-
-            var views = new List<ViewSchema>();
-            using (var conn = new SqlConnection(connectionString))
-            {
-                conn.Open();
-
-                var cmd = new SqlCommand(@"SELECT TABLE_NAME, VIEW_DEFINITION  from INFORMATION_SCHEMA.VIEWS", conn);
-                using (SqlDataReader reader = cmd.ExecuteReader())
-                {
-                    int count = 0;
-                    while (reader.Read())
-                    {
-                        var vs = new ViewSchema();
-
-                        if (reader["TABLE_NAME"] == DBNull.Value) { continue; }
-                        if (reader["VIEW_DEFINITION"] == DBNull.Value) { continue; }
-                        vs.ViewName = (string)reader["TABLE_NAME"];
-                        vs.ViewSQL = (string)reader["VIEW_DEFINITION"];
-
-                        // Remove all ".dbo" strings from the view definition
-                        vs.ViewSQL = removedbo.Replace(vs.ViewSQL, string.Empty);
-
-                        views.Add(vs);
-
-                        count++;
-                        CheckCancelled();
-                        handler(false, true, 50 + (int)(count * 50.0 / views.Count), "Parsed view " + vs.ViewName);
-
-                        _log.Debug("parsed view schema for [" + vs.ViewName + "]");
-                    }
-                }
-            }
-            return views;
-        }
-
+       
         /// <summary>
         /// Convenience method for checking if the conversion progress needs to be cancelled.
         /// </summary>
-        private static void CheckCancelled()
+        public static void CheckCancelled()
         {
             if (_cancelled)
             {
@@ -949,223 +864,11 @@ namespace Converter.Logic
         }
 
         /// <summary>
-        /// Creates a TableSchema object using the specified SQL Server connection
-        /// and the name of the table for which we need to create the schema.
-        /// </summary>
-        /// <param name="conn">The SQL Server connection to use</param>
-        /// <param name="tableName">The name of the table for which we wants to create the table schema.</param>
-        /// <returns>A table schema object that represents our knowledge of the table schema</returns>
-        private static TableSchema CreateTableSchema(String connectionString, string tableName, string tschma)
-        {
-            TableSchema res = new TableSchema();
-            res.TableName = tableName;
-            res.TableSchemaName = tschma;
-            res.Columns = new List<ColumnSchema>();
-
-            using (SqlConnection conn = new SqlConnection(connectionString))
-            {
-                conn.Open();
-
-                SqlCommand cmd = new SqlCommand(@"SELECT COLUMN_NAME,COLUMN_DEFAULT,IS_NULLABLE,DATA_TYPE, " +
-                    @" (columnproperty(object_id(TABLE_NAME), COLUMN_NAME, 'IsIdentity')) AS [IDENT], " +
-                    @"CHARACTER_MAXIMUM_LENGTH AS CSIZE " +
-                    "FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = '" + tableName + "' ORDER BY " +
-                    "ORDINAL_POSITION ASC", conn);
-                using (SqlDataReader reader = cmd.ExecuteReader())
-                {
-                    while (reader.Read())
-                    {
-                        object tmp = reader["COLUMN_NAME"];
-                        if (tmp is DBNull)
-                        {
-                            continue;
-                        }
-                        string colName = (string)reader["COLUMN_NAME"];
-
-                        tmp = reader["COLUMN_DEFAULT"];
-                        string colDefault;
-                        if (tmp is DBNull)
-                        {
-                            colDefault = string.Empty;
-                        }
-                        else
-                        {
-                            colDefault = (string)tmp;
-                        }
-
-                        tmp = reader["IS_NULLABLE"];
-                        bool isNullable = ((string)tmp == "YES");
-                        string dataType = (string)reader["DATA_TYPE"];
-                        bool isIdentity = false;
-                        if (reader["IDENT"] != DBNull.Value)
-                        {
-                            isIdentity = (((int)reader["IDENT"]) == 1);
-                        }
-                        int length = reader["CSIZE"] != DBNull.Value ? Convert.ToInt32(reader["CSIZE"]) : 0;
-
-                        ValidateDataType(dataType);
-
-                        // Note that not all data type names need to be converted because
-                        // SQLite establishes type affinity by searching certain strings
-                        // in the type name. For example - everything containing the string
-                        // 'int' in its type name will be assigned an INTEGER affinity
-                        if (dataType == "timestamp")
-                        {
-                            dataType = "blob";
-                        }
-                        else if (dataType == "datetime" || dataType == "smalldatetime" || dataType == "date" || dataType == "datetime2" || dataType == "time")
-                        {
-                            dataType = "datetime";
-                        }
-                        else if (dataType == "decimal")
-                        {
-                            dataType = "numeric";
-                        }
-                        else if (dataType == "money" || dataType == "smallmoney")
-                        {
-                            dataType = "numeric";
-                        }
-                        else if (dataType == "binary" || dataType == "varbinary" || dataType == "image")
-                        {
-                            dataType = "blob";
-                        }
-                        else if (dataType == "tinyint")
-                        {
-                            dataType = "smallint";
-                        }
-                        else if (dataType == "bigint")
-                        {
-                            dataType = "integer";
-                        }
-                        else if (dataType == "sql_variant")
-                        {
-                            dataType = "blob";
-                        }
-                        else if (dataType == "xml")
-                        {
-                            dataType = "varchar";
-                        }
-                        else if (dataType == "uniqueidentifier")
-                        {
-                            dataType = "guid";
-                        }
-                        else if (dataType == "ntext")
-                        {
-                            dataType = "text";
-                        }
-                        else if (dataType == "nchar")
-                        {
-                            dataType = "char";
-                        }
-
-                        if (dataType == "bit" || dataType == "int")
-                        {
-                            if (colDefault == "('False')")
-                            {
-                                colDefault = "(0)";
-                            }
-                            else if (colDefault == "('True')")
-                            {
-                                colDefault = "(1)";
-                            }
-                        }
-
-                        colDefault = FixDefaultValueString(colDefault);
-
-                        ColumnSchema col = new ColumnSchema();
-                        col.ColumnName = colName;
-                        col.ColumnType = dataType;
-                        col.Length = length;
-                        col.IsNullable = isNullable;
-                        col.IsIdentity = isIdentity;
-                        col.DefaultValue = AdjustDefaultValue(colDefault);
-                        res.Columns.Add(col);
-                    }
-                }
-
-                // Find PRIMARY KEY information
-                SqlCommand cmd2 = new SqlCommand(@"EXEC sp_pkeys '" + tableName + "'", conn);
-                using (SqlDataReader reader = cmd2.ExecuteReader())
-                {
-                    res.PrimaryKey = new List<string>();
-                    while (reader.Read())
-                    {
-                        string colName = (string)reader["COLUMN_NAME"];
-                        res.PrimaryKey.Add(colName);
-                    }
-                }
-
-                // Find COLLATE information for all columns in the table
-                SqlCommand cmd4 = new SqlCommand(@"EXEC sp_tablecollations '" + tschma + "." + tableName + "'", conn);
-                using (SqlDataReader reader = cmd4.ExecuteReader())
-                {
-                    while (reader.Read())
-                    {
-                        bool? isCaseSensitive = null;
-                        string colName = (string)reader["name"];
-                        if (reader["tds_collation"] != DBNull.Value)
-                        {
-                            byte[] mask = (byte[])reader["tds_collation"];
-                            if ((mask[2] & 0x10) != 0)
-                            {
-                                isCaseSensitive = false;
-                            }
-                            else
-                            {
-                                isCaseSensitive = true;
-                            }
-                        }
-
-                        if (isCaseSensitive.HasValue)
-                        {
-                            // Update the corresponding column schema.
-                            foreach (ColumnSchema csc in res.Columns)
-                            {
-                                if (csc.ColumnName == colName)
-                                {
-                                    csc.IsCaseSensitive = isCaseSensitive;
-                                    break;
-                                }
-                            }
-                        }
-                    }
-                }
-
-                try
-                {
-                    // Find index information
-                    SqlCommand cmd3 = new SqlCommand(@"exec sp_helpindex '" + tschma + "." + tableName + "'", conn);
-                    using (SqlDataReader reader = cmd3.ExecuteReader())
-                    {
-                        res.Indexes = new List<IndexSchema>();
-                        while (reader.Read())
-                        {
-                            string indexName = (string)reader["index_name"];
-                            string desc = (string)reader["index_description"];
-                            string keys = (string)reader["index_keys"];
-
-                            // Don't add the index if it is actually a primary key index
-                            if (desc.Contains("primary key")) { continue; }
-
-                            IndexSchema index = BuildIndexSchema(indexName, desc, keys);
-                            res.Indexes.Add(index);
-                        }
-                    }
-                }
-                catch (Exception ex)
-                {
-                    _log.Warn("failed to read index information for table [" + tableName + "]");
-                }
-            }
-            return res;
-        }
-
-        /// <summary>
         /// Small validation method to make sure we don't miss anything without getting
         /// an exception.
         /// </summary>
         /// <param name="dataType">The datatype to validate.</param>
-        private static void ValidateDataType(string dataType)
+        public static void ValidateDataType(string dataType)
         {
             if (dataType == "int" || dataType == "smallint" ||
                 dataType == "bit" || dataType == "float" ||
@@ -1190,7 +893,7 @@ namespace Converter.Logic
         /// </summary>
         /// <param name="colDefault">The original default value string (as read from SQL Server).</param>
         /// <returns>Adjusted DEFAULT value string (for SQLite)</returns>
-        private static string FixDefaultValueString(string colDefault)
+        public static string FixDefaultValueString(string colDefault)
         {
             bool replaced = false;
             string res = colDefault.Trim();
@@ -1236,115 +939,16 @@ namespace Converter.Logic
 
 
 
-        /// <summary>
-        /// Add foreign key schema object from the specified components (Read from SQL Server).
-        /// </summary>
-        /// <param name="connectionString">The SQL Server connection string to use</param>
-        /// <param name="ts">The table schema to whom foreign key schema should be added to</param>
-        private static void CreateForeignKeySchema(String connectionString, TableSchema ts)
-        {
-            ts.ForeignKeys = new List<ForeignKeySchema>();
+        
 
-            using (SqlConnection conn = new SqlConnection(connectionString))
-            {
-                conn.Open();
-            
-                SqlCommand cmd = new SqlCommand(
-                    @"SELECT " +
-                    @"  ColumnName = CU.COLUMN_NAME, " +
-                    @"  ForeignTableName  = PK.TABLE_NAME, " +
-                    @"  ForeignColumnName = PT.COLUMN_NAME, " +
-                    @"  DeleteRule = C.DELETE_RULE, " +
-                    @"  IsNullable = COL.IS_NULLABLE " +
-                    @"FROM INFORMATION_SCHEMA.REFERENTIAL_CONSTRAINTS C " +
-                    @"INNER JOIN INFORMATION_SCHEMA.TABLE_CONSTRAINTS FK ON C.CONSTRAINT_NAME = FK.CONSTRAINT_NAME " +
-                    @"INNER JOIN INFORMATION_SCHEMA.TABLE_CONSTRAINTS PK ON C.UNIQUE_CONSTRAINT_NAME = PK.CONSTRAINT_NAME " +
-                    @"INNER JOIN INFORMATION_SCHEMA.KEY_COLUMN_USAGE CU ON C.CONSTRAINT_NAME = CU.CONSTRAINT_NAME " +
-                    @"INNER JOIN " +
-                    @"  ( " +
-                    @"    SELECT i1.TABLE_NAME, i2.COLUMN_NAME " +
-                    @"    FROM  INFORMATION_SCHEMA.TABLE_CONSTRAINTS i1 " +
-                    @"    INNER JOIN INFORMATION_SCHEMA.KEY_COLUMN_USAGE i2 ON i1.CONSTRAINT_NAME = i2.CONSTRAINT_NAME " +
-                    @"    WHERE i1.CONSTRAINT_TYPE = 'PRIMARY KEY' " +
-                    @"  ) " +
-                    @"PT ON PT.TABLE_NAME = PK.TABLE_NAME " +
-                    @"INNER JOIN INFORMATION_SCHEMA.COLUMNS AS COL ON CU.COLUMN_NAME = COL.COLUMN_NAME AND FK.TABLE_NAME = COL.TABLE_NAME " +
-                    @"WHERE FK.Table_NAME='" + ts.TableName + "'", conn);
-
-                using (SqlDataReader reader = cmd.ExecuteReader())
-                {
-                    while (reader.Read())
-                    {
-                        ForeignKeySchema fkc = new ForeignKeySchema();
-                        fkc.ColumnName = (string)reader["ColumnName"];
-                        fkc.ForeignTableName = (string)reader["ForeignTableName"];
-                        fkc.ForeignColumnName = (string)reader["ForeignColumnName"];
-                        fkc.CascadeOnDelete = (string)reader["DeleteRule"] == "CASCADE";
-                        fkc.IsNullable = (string)reader["IsNullable"] == "YES";
-                        fkc.TableName = ts.TableName;
-                        ts.ForeignKeys.Add(fkc);
-                    }
-                }
-            }
-        }
-
-        /// <summary>
-        /// Builds an index schema object from the specified components (Read from SQL Server).
-        /// </summary>
-        /// <param name="indexName">The name of the index</param>
-        /// <param name="desc">The description of the index</param>
-        /// <param name="keys">Key columns that are part of the index.</param>
-        /// <returns>An index schema object that represents our knowledge of the index</returns>
-        private static IndexSchema BuildIndexSchema(string indexName, string desc, string keys)
-        {
-            IndexSchema res = new IndexSchema();
-            res.IndexName = indexName;
-
-            // Determine if this is a unique index or not.
-            string[] descParts = desc.Split(',');
-            foreach (string p in descParts)
-            {
-                if (p.Trim().Contains("unique"))
-                {
-                    res.IsUnique = true;
-                    break;
-                }
-            }
-
-            // Get all key names and check if they are ASCENDING or DESCENDING
-            res.Columns = new List<IndexColumn>();
-            string[] keysParts = keys.Split(',');
-            foreach (string p in keysParts)
-            {
-                Match m = _keyRx.Match(p.Trim());
-                if (!m.Success)
-                {
-                    throw new ApplicationException("Illegal key name [" + p + "] in index [" + indexName + "]");
-                }
-
-                string key = m.Groups[1].Value;
-                IndexColumn ic = new IndexColumn();
-                ic.ColumnName = key;
-                if (m.Groups[2].Success)
-                {
-                    ic.IsAscending = false;
-                }
-                else
-                {
-                    ic.IsAscending = true;
-                }
-
-                res.Columns.Add(ic);
-            }
-            return res;
-        }
+        
 
         /// <summary>
         /// More adjustments for the DEFAULT value clause.
         /// </summary>
         /// <param name="val">The value to adjust</param>
         /// <returns>Adjusted DEFAULT value string</returns>
-        private static string AdjustDefaultValue(string val)
+        public static string AdjustDefaultValue(string val)
         {
             if (string.IsNullOrWhiteSpace(val))
             {

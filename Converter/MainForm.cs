@@ -65,6 +65,7 @@ namespace Converter.WinForms
             }
             catch (Exception ex)
             {
+                SqlServerToSQLite.Log.Error("Error in \"UpdateUI\"", ex);
                 // Do nothing.
             }
         }
@@ -253,7 +254,19 @@ namespace Converter.WinForms
         {
             var config = this._manager.CurrentConfiguration;
 
-            if (config.SelectedTables.Count == 0)
+            Boolean hasConfigurationTables = (config.SelectedTables.Count > 0);
+
+            Boolean useSaved = false;
+            if (hasConfigurationTables)
+            {
+                var response = MessageBox.Show("Tables are marked as selected in the configuration file.  Would you like to re-use your selection?", "Confirm", MessageBoxButtons.YesNo, MessageBoxIcon.Question, MessageBoxDefaultButton.Button1);
+                if (response == DialogResult.Yes)
+                {
+                    useSaved = true;
+                }
+            }
+
+            if (!useSaved)
             {
                 List<TableSchema> updated = null;
                 Invoke(new MethodInvoker(delegate

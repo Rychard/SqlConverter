@@ -31,6 +31,7 @@ namespace Converter.Logic.Helpers
             }
             catch (Exception ex)
             {
+                SqlServerToSQLite.Log.Error("Error in \"GetDatabases\"", ex);
                 return new List<String>();
             }
         }
