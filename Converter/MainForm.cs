@@ -398,7 +398,7 @@ namespace Converter.WinForms
             if (result == DialogResult.OK)
             {
                 String filename = dlg.FileName;
-                ConversionConfiguration config = null;
+                ConversionConfiguration config;
                 Boolean success = SerializationHelper.TryXmlDeserialize(filename, out config);
 
                 if (success)
@@ -407,7 +407,7 @@ namespace Converter.WinForms
                 }
                 else
                 {
-                    throw new Exception("File couldn't be opened.");
+                    MessageBox.Show("The selected file was not a valid configuration file for this application.", "Invalid File", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 }
             }
         }
