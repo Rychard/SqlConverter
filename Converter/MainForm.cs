@@ -460,6 +460,7 @@ namespace Converter.WinForms
                 sw.Write(config.SerializedXml);
                 sw.Flush();
                 sw.Close();
+                sw.Dispose();
             }
         }
 
