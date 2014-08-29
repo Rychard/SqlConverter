@@ -50,6 +50,7 @@ namespace Converter.Logic.Helpers
 
             zipStream.IsStreamOwner = true; // Makes the Close also Close the underlying stream
             zipStream.Close();
+            zipStream.Dispose();
         }
     }
 }

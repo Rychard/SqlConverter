@@ -219,6 +219,12 @@ namespace Converter.WinForms
 
         private void btnStart_Click(object sender, EventArgs e)
         {
+            if (!EnsureSaveLocationExists())
+            {
+                MessageBox.Show("Specified save location is in a directory that does not exist!", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                return;
+            }
+
             ConversionConfiguration config = this._manager.CurrentConfiguration;
             string sqlConnString = config.ConnectionString;
 
@@ -228,6 +234,32 @@ namespace Converter.WinForms
             FailedViewDefinitionHandler viewFailureHandler = this.OnFailedViewDefinitionHandler;
 
             SqlServerToSQLite.ConvertSqlServerToSQLiteDatabase(sqlConnString, config.SqLiteDatabaseFilePath, config.EncryptionPassword, handler, selectionHandler, viewFailureHandler, config.CreateTriggersEnforcingForeignKeys, config.TryToCreateViews);
+        }
+
+        private void SaveLocationDoesNotExist()
+        {
+            // TODO: Potentially allow the user to specify a different save location.  If done, we will need to pass that information back to the caller so it can act upon the new value.
+        }
+
+        private Boolean EnsureSaveLocationExists()
+        {
+            try
+            {
+                String directory = Path.GetDirectoryName(_manager.CurrentConfiguration.SqLiteDatabaseFilePath);
+                if (!String.IsNullOrWhiteSpace(directory) && Directory.Exists(directory))
+                {
+                    return true;
+                }
+                else
+                {
+                    SaveLocationDoesNotExist();
+                    return false;
+                }
+            }
+            catch (Exception)
+            {
+                return false;
+            }
         }
 
         private string OnFailedViewDefinitionHandler(ViewSchema vs)
@@ -324,7 +356,6 @@ namespace Converter.WinForms
                                              var config = this._manager.CurrentConfiguration;
                                              if (!String.IsNullOrWhiteSpace(config.SqLiteDatabaseFilePathCompressed))
                                              {
-                                                 String filename = Path.GetFileName(config.SqLiteDatabaseFilePath);
                                                  var contents = new Dictionary<String, String>
                                                  {
                                                      { Path.GetFileName(config.SqLiteDatabaseFilePath), config.SqLiteDatabaseFilePath }
