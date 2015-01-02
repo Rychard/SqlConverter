@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 using System.Text;
 using System.Data;
@@ -32,15 +33,15 @@ namespace Converter.Logic
             get { return _log; }
         }
         
-        private static bool _isActive;
-        private static bool _cancelled;
+        private static Boolean _isActive;
+        private static Boolean _cancelled;
         
 
         /// <summary>
         /// Gets a value indicating whether this instance is active.
         /// </summary>
         /// <value><c>true</c> if this instance is active; otherwise, <c>false</c>.</value>
-        public static bool IsActive { get { return _isActive; } }
+        public static Boolean IsActive { get { return _isActive; } }
 
         /// <summary>
         /// Cancels the conversion.
@@ -61,17 +62,18 @@ namespace Converter.Logic
         /// <param name="handler">A handler delegate for progress notifications.</param>
         /// <param name="selectionHandler">The selection handler that allows the user to select which tables to convert</param>
         /// <remarks>The method continues asynchronously in the background and the caller returns immediately.</remarks>
-        public static void ConvertSqlServerToSQLiteDatabase(string sqlServerConnString, string sqlitePath, string password, SqlConversionHandler handler, SqlTableSelectionHandler selectionHandler, FailedViewDefinitionHandler viewFailureHandler, bool createTriggers, bool createViews)
+        public static void ConvertSqlServerToSQLiteDatabase(string sqlServerConnString, string sqlitePath, string password, SqlConversionHandler handler, SqlTableSelectionHandler selectionHandler, FailedViewDefinitionHandler viewFailureHandler, Boolean createTriggers, Boolean createViews)
         {
             // Clear cancelled flag
             _cancelled = false;
 
-            var wc = new WaitCallback(delegate
+            Task.Factory.StartNew(() =>
             {
                 try
                 {
                     _isActive = true;
-                    ConvertSqlServerDatabaseToSQLiteFile(sqlServerConnString, sqlitePath, password, handler, selectionHandler, viewFailureHandler, createTriggers, createViews);
+                    String sqlitePathResolved = TemplateToFilename(sqlitePath);
+                    ConvertSqlServerDatabaseToSQLiteFile(sqlServerConnString, sqlitePathResolved, password, handler, selectionHandler, viewFailureHandler, createTriggers, createViews);
                     _isActive = false;
                     handler(true, true, 100, "Finished converting database");
                 }
@@ -82,7 +84,25 @@ namespace Converter.Logic
                     handler(true, false, 100, ex.Message);
                 }
             });
-            ThreadPool.QueueUserWorkItem(wc);
+
+            //var wc = new WaitCallback(delegate
+            //{
+            //    try
+            //    {
+            //        _isActive = true;
+            //        String sqlitePathResolved = TemplateToFilename(sqlitePath);
+            //        ConvertSqlServerDatabaseToSQLiteFile(sqlServerConnString, sqlitePathResolved, password, handler, selectionHandler, viewFailureHandler, createTriggers, createViews);
+            //        _isActive = false;
+            //        handler(true, true, 100, "Finished converting database");
+            //    }
+            //    catch (Exception ex)
+            //    {
+            //        _log.Error("Failed to convert SQL Server database to SQLite database", ex);
+            //        _isActive = false;
+            //        handler(true, false, 100, ex.Message);
+            //    }
+            //});
+            //ThreadPool.QueueUserWorkItem(wc);
         }
 
         /// <summary>
@@ -94,7 +114,7 @@ namespace Converter.Logic
         /// <param name="password">The password to use or NULL if no password should be used to encrypt the DB</param>
         /// <param name="handler">A handler to handle progress notifications.</param>
         /// <param name="selectionHandler">The selection handler which allows the user to select which tables to convert.</param>
-        private static void ConvertSqlServerDatabaseToSQLiteFile(string sqlConnString, string sqlitePath, string password, SqlConversionHandler handler, SqlTableSelectionHandler selectionHandler, FailedViewDefinitionHandler viewFailureHandler, bool createTriggers, bool createViews)
+        private static void ConvertSqlServerDatabaseToSQLiteFile(String sqlConnString, String sqlitePath, String password, SqlConversionHandler handler, SqlTableSelectionHandler selectionHandler, FailedViewDefinitionHandler viewFailureHandler, Boolean createTriggers, Boolean createViews)
         {
             // Delete the destination file (only if it exists)
             DeleteFile(sqlitePath);
@@ -165,7 +185,7 @@ namespace Converter.Logic
         /// <param name="schema">The schema of the SQL Server database.</param>
         /// <param name="password">The password to use for encrypting the file</param>
         /// <param name="handler">A handler to handle progress notifications.</param>
-        private static void CopySqlServerRowsToSQLiteDB(string sqlConnString, string sqlitePath, List<TableSchema> schema, string password, SqlConversionHandler handler)
+        private static void CopySqlServerRowsToSQLiteDB(String sqlConnString, String sqlitePath, List<TableSchema> schema, String password, SqlConversionHandler handler)
         {
             CheckCancelled();
             handler(false, true, 0, "Preparing to insert tables...");
@@ -235,12 +255,12 @@ namespace Converter.Logic
         }
 
         /// <summary>
-        /// Used in order to adjust the value received from SQL Servr for the SQLite database.
+        /// Used in order to adjust the value received from SQL Server for the SQLite database.
         /// </summary>
         /// <param name="val">The value object</param>
         /// <param name="columnSchema">The corresponding column schema</param>
         /// <returns>SQLite adjusted value.</returns>
-        private static object CastValueForColumn(object val, ColumnSchema columnSchema)
+        private static Object CastValueForColumn(object val, ColumnSchema columnSchema)
         {
             if (val is DBNull)
             {
@@ -395,21 +415,9 @@ namespace Converter.Logic
         /// <returns>A normalized name</returns>
         private static string GetNormalizedName(string str, List<string> names)
         {
-            var sb = new StringBuilder();
-            for (int i = 0; i < str.Length; i++)
-            {
-                if (Char.IsLetterOrDigit(str[i]) || str[i] == '_')
-                {
-                    sb.Append(str[i]);
-                }
-                else
-                {
-                    sb.Append("_");
-                }
-            }
-
-            String name = sb.ToString();
-
+            Char[] characters = str.Select(c => Char.IsLetterOrDigit(c) ? c : '_').ToArray();
+            String name = new String(characters);
+            
             // Avoid returning duplicate name
             if (names.Contains(name))
             {
@@ -1018,6 +1026,22 @@ namespace Converter.Logic
         public static string WriteTriggerSchema(TriggerSchema ts)
         {
             return @"CREATE TRIGGER [" + ts.Name + "] " + ts.Type + " " + ts.Event + " ON [" + ts.Table + "] " + "BEGIN " + ts.Body + " END;";
+        }
+
+        private static String TemplateToFilename(String template)
+        {
+            DateTime current = DateTime.UtcNow;
+            String filename = template;
+
+            filename = filename.Replace("%ut", DateTimeToUnixTimestamp(current).ToString(CultureInfo.InvariantCulture));
+            filename = filename.Replace("%wt", current.ToFileTimeUtc().ToString(CultureInfo.InvariantCulture));
+
+            return filename;
+        }
+
+        public static double DateTimeToUnixTimestamp(DateTime dateTime)
+        {
+            return (dateTime - new DateTime(1970, 1, 1).ToLocalTime()).TotalSeconds;
         }
     }
 

@@ -156,12 +156,9 @@ namespace Converter.Logic
         /// </summary>
         private List<TableSchema> GetTableSchemas(SqlConversionHandler handler = null)
         {
+            List<Tuple<String, String>> tableNamesAndSchemas = new List<Tuple<String, String>>();
+
             // First step is to read the names of all tables in the database
-            var tables = new List<TableSchema>();
-
-            var tableNames = new List<string>();
-            var tblschema = new List<string>();
-
             using (var conn = new SqlConnection(_connectionString))
             {
                 conn.Open();
@@ -172,25 +169,33 @@ namespace Converter.Logic
                 {
                     while (reader.Read())
                     {
-                        if (reader["TABLE_NAME"] == DBNull.Value) { continue; }
                         if (reader["TABLE_SCHEMA"] == DBNull.Value) { continue; }
-                        tableNames.Add((String)reader["TABLE_NAME"]);
-                        tblschema.Add((String)reader["TABLE_SCHEMA"]);
+                        if (reader["TABLE_NAME"] == DBNull.Value) { continue; }
+                        
+                        var tableSchema = (String)reader["TABLE_SCHEMA"];
+                        var tableName = (String) reader["TABLE_NAME"];
+                        
+                        tableNamesAndSchemas.Add(new Tuple<String, String>(tableSchema, tableName));
                     }
                 }
             }
 
+            tableNamesAndSchemas = tableNamesAndSchemas.OrderBy(obj => obj.Item1).ThenBy(obj => obj.Item2).ToList();
+
             // Next step is to use ADO APIs to query the schema of each table.
+            List<TableSchema> tables = new List<TableSchema>();
             Object stateLocker = new Object();
             int count = 0;
-            int totalTables = tableNames.Count;
-            var parallelResult = Parallel.For(0, totalTables, i =>
+            int totalTables = tableNamesAndSchemas.Count;
+
+            Parallel.ForEach(tableNamesAndSchemas, tableTuple =>
             {
-                String tname = tableNames[i];
-                String tschma = tblschema[i];
-                TableSchema ts = CreateTableSchema(tname, tschma);
+                String tableSchema = tableTuple.Item1;
+                String tableName = tableTuple.Item2;
+
+                TableSchema ts = CreateTableSchema(tableName, tableSchema);
                 CreateForeignKeySchema(ts);
-                int tablesProcessed = -1;
+                int tablesProcessed;
                 lock (stateLocker)
                 {
                     tables.Add(ts);
@@ -200,18 +205,14 @@ namespace Converter.Logic
                 SqlServerToSQLite.CheckCancelled();
                 if (handler != null)
                 {
-                    handler(false, true, (int)(count * 50.0 / totalTables), "Parsed table " + tname);
+                    handler(false, true, (int)(count * 50.0 / totalTables), "Parsed table " + tableName);
                 }
-                _log.Debug("parsed table schema for [" + tname + "]");
+                _log.Debug("parsed table schema for [" + tableName + "]");
 
                 int remaining = totalTables - tablesProcessed;
                 OnTableSchemaReaderProgressChanged(ts, tablesProcessed, remaining);
             });
 
-            while (!parallelResult.IsCompleted)
-            {
-                Thread.Sleep(1000);
-            }
             _log.Debug("finished parsing all tables in SQL Server schema");
 
             // Sort the resulting list of TableSchema objects by the underlying table's name.

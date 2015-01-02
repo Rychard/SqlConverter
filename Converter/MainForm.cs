@@ -264,19 +264,22 @@ namespace Converter.WinForms
         {
             string updated = null;
             Invoke(new MethodInvoker(() =>
-                                     {
-                                         var dlg = new ViewFailureDialog();
-                                         dlg.View = vs;
-                                         DialogResult res = dlg.ShowDialog(this);
-                                         if (res == DialogResult.OK)
-                                         {
-                                             updated = dlg.ViewSQL;
-                                         }
-                                         else
-                                         {
-                                             updated = null;
-                                         }
-                                     }));
+            {
+                updated = FailedViewDefinitionHandler(vs);
+            }));
+            return updated;
+        }
+
+        private string FailedViewDefinitionHandler(ViewSchema vs)
+        {
+            String updated = null;
+            var dialog = new ViewFailureDialog();
+            dialog.View = vs;
+            DialogResult res = dialog.ShowDialog(this);
+            if (res == DialogResult.OK)
+            {
+                updated = dialog.ViewSQL;
+            }
             return updated;
         }
 
@@ -299,16 +302,16 @@ namespace Converter.WinForms
             if (!useSaved)
             {
                 List<TableSchema> updated = null;
-                Invoke(new MethodInvoker(delegate
-                                         {
-                                             // Allow the user to select which tables to include by showing him the table selection dialog.
-                                             var dlg = new TableSelectionDialog();
-                                             DialogResult res = dlg.ShowTables(schema, this);
-                                             if (res == DialogResult.OK)
-                                             {
-                                                 updated = dlg.IncludedTables;
-                                             }
-                                         }));
+                Invoke(new MethodInvoker(() =>
+                {
+                    // Allow the user to select which tables to include by showing him the table selection dialog.
+                    var dlg = new TableSelectionDialog();
+                    DialogResult res = dlg.ShowTables(schema, this);
+                    if (res == DialogResult.OK)
+                    {
+                        updated = dlg.IncludedTables;
+                    }
+                }));
                 
                 List<String> selectedTables = updated.Select(obj => obj.TableName).ToList();
                 config.SelectedTables = selectedTables;
@@ -319,50 +322,52 @@ namespace Converter.WinForms
 
         private void OnSqlConversionHandler(bool done, bool success, int percent, string msg)
         {
-            Invoke(new MethodInvoker(delegate
-                                     {
-                                         UpdateSensitivity();
-                                         AddMessage(String.Format("{0}", msg));
-                                         pbrProgress.Value = percent;
+            Invoke(new MethodInvoker(() => SqlConversionHandler(done, success, percent, msg)));
+        }
 
-                                         if (!done) { return; }
+        private void SqlConversionHandler(bool done, bool success, int percent, string msg)
+        {
+            UpdateSensitivity();
+            AddMessage(String.Format("{0}", msg));
+            pbrProgress.Value = percent;
 
-                                         btnStart.Enabled = true;
-                                         Cursor = Cursors.Default;
-                                         UpdateSensitivity();
+            if (!done) { return; }
 
-                                         if (success)
-                                         {
-                                             pbrProgress.Value = 0;
-                                             AddMessage("Conversion Finished.");
+            btnStart.Enabled = true;
+            Cursor = Cursors.Default;
+            UpdateSensitivity();
 
-                                             // If a filename is set for an archive, then compress the database.
-                                             var config = _manager.CurrentConfiguration;
-                                             if (!String.IsNullOrWhiteSpace(config.SqLiteDatabaseFilePathCompressed))
-                                             {
-                                                 var contents = new Dictionary<String, String>
-                                                 {
-                                                     { Path.GetFileName(config.SqLiteDatabaseFilePath), config.SqLiteDatabaseFilePath }
-                                                 };
+            if (success)
+            {
+                pbrProgress.Value = 0;
+                AddMessage("Conversion Finished.");
 
-                                                 ZipHelper.CreateZip(config.SqLiteDatabaseFilePathCompressed, contents);
-                                             }
-                                             MessageBox.Show(this, msg, "Conversion Finished", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                                         }
-                                         else
-                                         {
-                                             if (!_shouldExit)
-                                             {
-                                                 MessageBox.Show(this, msg, "Conversion Failed", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                                                 pbrProgress.Value = 0;
-                                                 AddMessage("Conversion Failed!");
-                                             }
-                                             else
-                                             {
-                                                 Application.Exit();
-                                             }
-                                         }
-                                     }));
+                // If a filename is set for an archive, then compress the database.
+                var config = _manager.CurrentConfiguration;
+                if (!String.IsNullOrWhiteSpace(config.SqLiteDatabaseFilePathCompressed))
+                {
+                    var contents = new Dictionary<String, String>
+                    {
+                        {Path.GetFileName(config.SqLiteDatabaseFilePath), config.SqLiteDatabaseFilePath}
+                    };
+
+                    ZipHelper.CreateZip(config.SqLiteDatabaseFilePathCompressed, contents);
+                }
+                MessageBox.Show(this, msg, "Conversion Finished", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            }
+            else
+            {
+                if (!_shouldExit)
+                {
+                    MessageBox.Show(this, msg, "Conversion Failed", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    pbrProgress.Value = 0;
+                    AddMessage("Conversion Failed!");
+                }
+                else
+                {
+                    Application.Exit();
+                }
+            }
         }
 
         #region Private Methods
@@ -458,10 +463,11 @@ namespace Converter.WinForms
 
         private void AddMessage(String msg)
         {
-            lbMessages.Items.Add(msg);
+            String time = DateTime.Now.ToLongTimeString();
+            String line = String.Format("[{0}] {1}", time, msg);
+            lbMessages.Items.Add(line);
             int visibleItems = lbMessages.ClientSize.Height / lbMessages.ItemHeight;
             lbMessages.TopIndex = Math.Max(lbMessages.Items.Count - visibleItems + 1, 0);
-
         }
     }
 }
