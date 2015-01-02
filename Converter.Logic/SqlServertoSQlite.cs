@@ -16,7 +16,7 @@ using log4net;
 namespace Converter.Logic
 {
     /// <summary>
-    /// This class is resposible for converting SQL Server databases into SQLite database files.
+    /// This class is responsible for converting SQL Server databases into SQLite database files.
     /// </summary>
     /// <remarks>The class knows how to convert table and index structures only.</remarks>
     public class SqlServerToSQLite
@@ -32,8 +32,8 @@ namespace Converter.Logic
             get { return _log; }
         }
         
-        private static bool _isActive = false;
-        private static bool _cancelled = false;
+        private static bool _isActive;
+        private static bool _cancelled;
         
 
         /// <summary>
@@ -336,7 +336,7 @@ namespace Converter.Logic
             }
             catch (Exception ex)
             {
-                SqlServerToSQLite.Log.Error("Error in \"ParseStringAsGuid\"", ex);
+                Log.Error("Error in \"ParseStringAsGuid\"", ex);
                 return Guid.Empty;
             }
         }
@@ -584,7 +584,7 @@ namespace Converter.Logic
             }
             catch (SQLiteException ex)
             {
-                SqlServerToSQLite.Log.Error("Error in \"AddSQLiteView\"", ex);
+                Log.Error("Error in \"AddSQLiteView\"", ex);
                 tx.Rollback();
 
                 // Rethrow the exception if it the caller didn't supply a handler.
@@ -739,17 +739,17 @@ namespace Converter.Logic
         /// Used when creating the CREATE TABLE DDL. Creates a single row
         /// for the specified column.
         /// </summary>
-        /// <param name="col">The column schema</param>
+        /// <param name="columnSchema">The column schema</param>
         /// <returns>A single column line to be inserted into the general CREATE TABLE DDL statement</returns>
-        private static string BuildColumnStatement(ColumnSchema col, TableSchema ts, ref bool pkey)
+        private static string BuildColumnStatement(ColumnSchema columnSchema, TableSchema tableSchema, ref bool pkey)
         {
             var sb = new StringBuilder();
-            sb.Append("\t[" + col.ColumnName + "]\t");
+            sb.Append("\t[" + columnSchema.ColumnName + "]\t");
 
             // Special treatment for IDENTITY columns
-            if (col.IsIdentity)
+            if (columnSchema.IsIdentity)
             {
-                if (ts.PrimaryKey.Count == 1 && (col.ColumnType == "tinyint" || col.ColumnType == "int" || col.ColumnType == "smallint" || col.ColumnType == "bigint" || col.ColumnType == "integer"))
+                if (tableSchema.PrimaryKey.Count == 1 && (columnSchema.ColumnType == "tinyint" || columnSchema.ColumnType == "int" || columnSchema.ColumnType == "smallint" || columnSchema.ColumnType == "bigint" || columnSchema.ColumnType == "integer"))
                 {
                     sb.Append("integer PRIMARY KEY AUTOINCREMENT");
                     pkey = true;
@@ -761,35 +761,35 @@ namespace Converter.Logic
             }
             else
             {
-                if (col.ColumnType == "int")
+                if (columnSchema.ColumnType == "int")
                 {
                     sb.Append("integer");
                 }
                 else
                 {
-                    sb.Append(col.ColumnType);
+                    sb.Append(columnSchema.ColumnType);
                 }
-                if (col.Length > 0)
+                if (columnSchema.Length > 0)
                 {
-                    sb.Append("(" + col.Length + ")");
+                    sb.Append("(" + columnSchema.Length + ")");
                 }
             }
-            if (!col.IsNullable)
+            if (!columnSchema.IsNullable)
             {
                 sb.Append(" NOT NULL");
             }
 
-            if (col.IsCaseSensitive.HasValue && !col.IsCaseSensitive.Value)
+            if (columnSchema.IsCaseSensitive.HasValue && !columnSchema.IsCaseSensitive.Value)
             {
                 sb.Append(" COLLATE NOCASE");
             }
 
-            string defval = StripParens(col.DefaultValue);
+            string defval = StripParens(columnSchema.DefaultValue);
             defval = DiscardNational(defval);
-            _log.Debug("DEFAULT VALUE BEFORE [" + col.DefaultValue + "] AFTER [" + defval + "]");
+            _log.Debug("DEFAULT VALUE BEFORE [" + columnSchema.DefaultValue + "] AFTER [" + defval + "]");
             if (defval != string.Empty && defval.ToUpper().Contains("GETDATE"))
             {
-                _log.Debug("converted SQL Server GETDATE() to CURRENT_TIMESTAMP for column [" + col.ColumnName + "]");
+                _log.Debug("converted SQL Server GETDATE() to CURRENT_TIMESTAMP for column [" + columnSchema.ColumnName + "]");
                 sb.Append(" DEFAULT (CURRENT_TIMESTAMP)");
             }
             else if (defval != string.Empty && IsValidDefaultValue(defval))
