@@ -6,7 +6,6 @@ using System.Text;
 using System.Data;
 using System.Data.SqlClient;
 using System.Data.SQLite;
-using System.Threading;
 using System.Text.RegularExpressions;
 using System.IO;
 using System.Threading.Tasks;
@@ -19,7 +18,7 @@ namespace Converter.Logic
     /// <summary>
     /// This class is responsible for converting SQL Server databases into SQLite database files.
     /// </summary>
-    /// <remarks>The class knows how to convert table and index structures only.</remarks>
+    /// <remarks>Only supports the conversion of table and index structures.</remarks>
     public class SqlServerToSQLite
     {
         private static readonly Regex _defaultValueRx = new Regex(@"\(N(\'.*\')\)");
@@ -84,25 +83,6 @@ namespace Converter.Logic
                     handler(true, false, 100, ex.Message);
                 }
             });
-
-            //var wc = new WaitCallback(delegate
-            //{
-            //    try
-            //    {
-            //        _isActive = true;
-            //        String sqlitePathResolved = TemplateToFilename(sqlitePath);
-            //        ConvertSqlServerDatabaseToSQLiteFile(sqlServerConnString, sqlitePathResolved, password, handler, selectionHandler, viewFailureHandler, createTriggers, createViews);
-            //        _isActive = false;
-            //        handler(true, true, 100, "Finished converting database");
-            //    }
-            //    catch (Exception ex)
-            //    {
-            //        _log.Error("Failed to convert SQL Server database to SQLite database", ex);
-            //        _isActive = false;
-            //        handler(true, false, 100, ex.Message);
-            //    }
-            //});
-            //ThreadPool.QueueUserWorkItem(wc);
         }
 
         /// <summary>
@@ -117,26 +97,28 @@ namespace Converter.Logic
         private static void ConvertSqlServerDatabaseToSQLiteFile(String sqlConnString, String sqlitePath, String password, SqlConversionHandler handler, SqlTableSelectionHandler selectionHandler, FailedViewDefinitionHandler viewFailureHandler, Boolean createTriggers, Boolean createViews)
         {
             // Delete the destination file (only if it exists)
-            DeleteFile(sqlitePath);
+            if (DeleteFile(sqlitePath))
+            {
+                throw new Exception("File could not be deleted!");
+            }
 
             SqlServerSchemaReader schemaReader = new SqlServerSchemaReader(sqlConnString, Log);
 
+            schemaReader.TableSchemaReaderProgressChanged += (sender, args) =>
+            {
+                int total = args.TablesProcessed + args.TablesRemaining;
+                int percentage = (int) ((args.TablesProcessed/(Double) total)*100);
+                String msg = String.Format("Parsed table {0}", args.LastProcessedTable.TableName);
+                handler(false, false, percentage, msg);
+            };
 
-            schemaReader.TableSchemaReaderProgressChanged += delegate(object sender, TableSchemaReaderProgressChangedEventArgs args)
-                                                             {
-                                                                 int total = args.TablesProcessed + args.TablesRemaining;
-                                                                 int percentage = (int)((args.TablesProcessed / (Double)total) * 100);
-                                                                 String msg = String.Format("Parsed table {0}", args.LastProcessedTable.TableName);
-                                                                 handler(false, false, percentage, msg);
-                                                             };
-
-            schemaReader.ViewSchemaReaderProgressChanged += delegate(object sender, ViewSchemaReaderProgressChangedEventArgs args)
-                                                            {
-                                                                int total = args.ViewsProcessed + args.ViewsRemaining;
-                                                                int percentage = (int)((args.ViewsProcessed / (Double)total) * 100);
-                                                                String msg = String.Format("Parsed view {0}", args.LastProcessedView.ViewName);
-                                                                handler(false, false, percentage, msg);
-                                                            };
+            schemaReader.ViewSchemaReaderProgressChanged += (sender, args) =>
+            {
+                int total = args.ViewsProcessed + args.ViewsRemaining;
+                int percentage = (int) ((args.ViewsProcessed/(Double) total)*100);
+                String msg = String.Format("Parsed view {0}", args.LastProcessedView.ViewName);
+                handler(false, false, percentage, msg);
+            };
 
             schemaReader.PopulateTableSchema();
             schemaReader.PopulateViewSchema();
@@ -769,14 +751,7 @@ namespace Converter.Logic
             }
             else
             {
-                if (columnSchema.ColumnType == "int")
-                {
-                    sb.Append("integer");
-                }
-                else
-                {
-                    sb.Append(columnSchema.ColumnType);
-                }
+                sb.Append(columnSchema.ColumnType == "int" ? "integer" : columnSchema.ColumnType);
                 if (columnSchema.Length > 0)
                 {
                     sb.Append("(" + columnSchema.Length + ")");
@@ -853,10 +828,7 @@ namespace Converter.Logic
             {
                 return value;
             }
-            else
-            {
-                return StripParens(m.Groups[1].Value);
-            }
+            return StripParens(m.Groups[1].Value);
         }
        
         /// <summary>
@@ -940,10 +912,7 @@ namespace Converter.Logic
             {
                 return "(" + sb + ")";
             }
-            else
-            {
-                return sb.ToString();
-            }
+            return sb.ToString();
         }
 
         /// <summary>

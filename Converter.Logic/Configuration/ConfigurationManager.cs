@@ -7,12 +7,11 @@ namespace Converter.Logic.Configuration
         private ConversionConfiguration _currentConfiguration;
         public ConversionConfiguration CurrentConfiguration
         {
-            get { return this._currentConfiguration; }
+            get { return _currentConfiguration; }
             set
             {
-                this._currentConfiguration = value;
-                
-                this._currentConfiguration.PropertyChanged += delegate { this.OnConfigurationChanged(); };
+                _currentConfiguration = value;
+                _currentConfiguration.PropertyChanged += (sender, args) => OnConfigurationChanged();
                 
                 // We should raise this event manually.
                 // Assigning a new value to this property, by definition, is a configuration change.
@@ -23,7 +22,7 @@ namespace Converter.Logic.Configuration
         public event EventHandler ConfigurationChanged;
         protected virtual void OnConfigurationChanged()
         {
-            EventHandler handler = this.ConfigurationChanged;
+            EventHandler handler = ConfigurationChanged;
             if (handler != null)
             {
                 handler(this, EventArgs.Empty);
@@ -32,8 +31,7 @@ namespace Converter.Logic.Configuration
 
         public ConfigurationManager()
         {
-            this.CurrentConfiguration = new ConversionConfiguration();
+            CurrentConfiguration = new ConversionConfiguration();
         }
-        
     }
 }

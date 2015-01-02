@@ -6,8 +6,7 @@ using Converter.Logic.Schema;
 namespace Converter.WinForms
 {
     /// <summary>
-    /// The dialog allows the user to select which tables to include in the 
-    /// converstion process.
+    /// The dialog allows the user to select which tables to include in the conversion process.
     /// </summary>
     public partial class TableSelectionDialog : Form
     {
@@ -27,12 +26,15 @@ namespace Converter.WinForms
             get
             {
                 List<TableSchema> res = new List<TableSchema>();
-                foreach (DataGridViewRow row in this.grdTables.Rows)
+                
+                foreach (DataGridViewRow row in grdTables.Rows)
                 {
                     bool include = (bool)row.Cells[0].Value;
                     if (include)
+                    {
                         res.Add((TableSchema)row.Tag);
-                } // foreach
+                    }
+                }
 
                 return res;
             }

@@ -8,7 +8,7 @@ namespace Converter.Logic.Helpers
     /// <summary>
     /// Contains generic methods allowing for objects to be serialized and deserialized to/from disk.
     /// </summary>
-    public static partial class SerializationHelper
+    public static class SerializationHelper
     {
         /// <summary>
         /// Serializes the specified object to XML, and stores it with the specified filename.
@@ -21,7 +21,7 @@ namespace Converter.Logic.Helpers
             try
             {
                 Boolean success;
-                String serializedObject = TryXmlSerialize<T>(obj, out success);
+                String serializedObject = TryXmlSerialize(obj, out success);
                 if (success)
                 {
                     using (var streamWriter = new StreamWriter(filename))
@@ -49,7 +49,7 @@ namespace Converter.Logic.Helpers
         {
             try
             {
-                Boolean success = XmlSerialize<T>(obj, filename);
+                Boolean success = XmlSerialize(obj, filename);
                 return success;
             }
             catch (Exception)

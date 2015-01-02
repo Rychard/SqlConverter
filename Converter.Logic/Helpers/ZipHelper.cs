@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Security;
 using ICSharpCode.SharpZipLib.Core;
 using ICSharpCode.SharpZipLib.Zip;
 
@@ -13,6 +14,13 @@ namespace Converter.Logic.Helpers
         /// The keys in the dictionary are the paths of the files as they should appear in the archive.  
         /// The values in the dictionary are the absolute paths to the files on the local filesystem.
         /// </summary>
+        /// <exception cref="UnauthorizedAccessException">The caller does not have the required permission.-or- <paramref name="archiveFilePath" /> specified a file that is read-only. </exception>
+        /// <exception cref="PathTooLongException">The specified path, file name, or both exceed the system-defined maximum length. For example, on Windows-based platforms, paths must be less than 248 characters, and file names must be less than 260 characters. </exception>
+        /// <exception cref="DirectoryNotFoundException">The specified path is invalid (for example, it is on an unmapped drive). </exception>
+        /// <exception cref="IOException">An I/O error occurred while creating the file. </exception>
+        /// <exception cref="NotSupportedException"><paramref name="archiveFilePath" /> is in an invalid format. </exception>
+        /// <exception cref="SecurityException">The caller does not have the required permission. </exception>
+        /// <exception cref="FileNotFoundException">One of the elements within <paramref name="zipContents" /> points to a file that does not exist. </exception>
         public static void CreateZip(String archiveFilePath, Dictionary<String, String> zipContents)
         {
             using (FileStream fsOut = File.Create(archiveFilePath))

@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using Converter.Logic.Schema;
 
 namespace Converter.Logic.Schema
 {

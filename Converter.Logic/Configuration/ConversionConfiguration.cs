@@ -155,14 +155,11 @@ namespace Converter.Logic.Configuration
         {
             get
             {
-                if (this.IntegratedSecurity)
+                if (IntegratedSecurity)
                 {
-                    return GetSqlServerConnectionString(this.SqlServerAddress, this.DatabaseName);
+                    return GetSqlServerConnectionString(SqlServerAddress, DatabaseName);
                 }
-                else
-                {
-                    return GetSqlServerConnectionString(this.SqlServerAddress, this.DatabaseName, this.User, this.Password);
-                }
+                return GetSqlServerConnectionString(SqlServerAddress, DatabaseName, User, Password);
             }
         }
 
@@ -176,10 +173,7 @@ namespace Converter.Logic.Configuration
                 {
                     return serializedXml;
                 }
-                else
-                {
-                    return null;
-                }
+                return null;
             }
 
         }
@@ -188,17 +182,17 @@ namespace Converter.Logic.Configuration
 
         public ConversionConfiguration()
         {
-            this._sqlServerAddress = "";
-            this._databaseName = "";
-            this._integratedSecurity = true;
-            this._user = "";
-            this._password = "";
-            this._sqLiteDatabaseFilePath = "";
-            this._sqLiteDatabaseFilePathCompressed = "";
-            this._encryptionPassword = "";
-            this._createTriggersEnforcingForeignKeys = false;
-            this._tryToCreateViews = false;
-            this._selectedTables = new List<String>();
+            _sqlServerAddress = "";
+            _databaseName = "";
+            _integratedSecurity = true;
+            _user = "";
+            _password = "";
+            _sqLiteDatabaseFilePath = "";
+            _sqLiteDatabaseFilePathCompressed = "";
+            _encryptionPassword = "";
+            _createTriggersEnforcingForeignKeys = false;
+            _tryToCreateViews = false;
+            _selectedTables = new List<String>();
         }
 
         private static string GetSqlServerConnectionString(string address, string db)

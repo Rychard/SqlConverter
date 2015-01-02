@@ -13,18 +13,18 @@ namespace Converter.WinForms
 
         public ViewSchema View
         {
-            get { return this._view; }
+            get { return _view; }
             set
             {
-                this._view = value;
-                Text = "SQL Error: "+this._view.ViewName;
-                this.txtSQL.Text = this._view.ViewSQL;
+                _view = value;
+                Text = "SQL Error: "+ _view.ViewName;
+                txtSQL.Text = _view.ViewSQL;
             }
         }
 
         public string ViewSQL
         {
-            get { return this.txtSQL.Text; }
+            get { return txtSQL.Text; }
         }
 
 

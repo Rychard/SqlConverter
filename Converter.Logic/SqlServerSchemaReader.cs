@@ -223,17 +223,16 @@ namespace Converter.Logic
         }
 
         /// <summary>
-        /// Creates a TableSchema object using the specified SQL Server connection
-        /// and the name of the table for which we need to create the schema.
+        /// Creates a TableSchema object using the specified SQL Server connection and the name of the table for which we need to create the schema.
         /// </summary>
-        /// <param name="conn">The SQL Server connection to use</param>
-        /// <param name="tableName">The name of the table for which we wants to create the table schema.</param>
+        /// <param name="tableName">The name of the table for which we want to create a table schema.</param>
+        /// <param name="tableSchemaName">The name of the schema containing the table for which we want to create a table schema.</param>
         /// <returns>A table schema object that represents our knowledge of the table schema</returns>
-        private TableSchema CreateTableSchema(string tableName, string tschma)
+        private TableSchema CreateTableSchema(string tableName, string tableSchemaName)
         {
             TableSchema res = new TableSchema();
             res.TableName = tableName;
-            res.TableSchemaName = tschma;
+            res.TableSchemaName = tableSchemaName;
             res.Columns = new List<ColumnSchema>();
 
             using (SqlConnection conn = new SqlConnection(_connectionString))
@@ -370,7 +369,7 @@ namespace Converter.Logic
                 }
 
                 // Find COLLATE information for all columns in the table
-                SqlCommand cmd4 = new SqlCommand(@"EXEC sp_tablecollations '" + tschma + "." + tableName + "'", conn);
+                SqlCommand cmd4 = new SqlCommand(@"EXEC sp_tablecollations '" + tableSchemaName + "." + tableName + "'", conn);
                 using (SqlDataReader reader = cmd4.ExecuteReader())
                 {
                     while (reader.Read())
@@ -380,14 +379,7 @@ namespace Converter.Logic
                         if (reader["tds_collation"] != DBNull.Value)
                         {
                             byte[] mask = (byte[])reader["tds_collation"];
-                            if ((mask[2] & 0x10) != 0)
-                            {
-                                isCaseSensitive = false;
-                            }
-                            else
-                            {
-                                isCaseSensitive = true;
-                            }
+                            isCaseSensitive = (mask[2] & 0x10) == 0;
                         }
 
                         if (isCaseSensitive.HasValue)
@@ -408,7 +400,7 @@ namespace Converter.Logic
                 try
                 {
                     // Find index information
-                    SqlCommand cmd3 = new SqlCommand(@"exec sp_helpindex '" + tschma + "." + tableName + "'", conn);
+                    SqlCommand cmd3 = new SqlCommand(@"exec sp_helpindex '" + tableSchemaName + "." + tableName + "'", conn);
                     using (SqlDataReader reader = cmd3.ExecuteReader())
                     {
                         res.Indexes = new List<IndexSchema>();
@@ -476,7 +468,7 @@ namespace Converter.Logic
                     handler(false, true, 50 + (int)(count * 50.0 / totalViews), "Parsed view " + vs.ViewName);
                 }
 
-                int viewsProcessed = -1;
+                int viewsProcessed;
                 lock (stateLocker)
                 {
                     count++;
@@ -589,14 +581,7 @@ namespace Converter.Logic
                 string key = m.Groups[1].Value;
                 IndexColumn ic = new IndexColumn();
                 ic.ColumnName = key;
-                if (m.Groups[2].Success)
-                {
-                    ic.IsAscending = false;
-                }
-                else
-                {
-                    ic.IsAscending = true;
-                }
+                ic.IsAscending = !m.Groups[2].Success;
 
                 res.Columns.Add(ic);
             }

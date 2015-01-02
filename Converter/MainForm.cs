@@ -21,7 +21,7 @@ namespace Converter.WinForms
         {
             InitializeComponent();
             _manager = new ConfigurationManager();
-            _manager.ConfigurationChanged += delegate { UpdateUI(); };
+            _manager.ConfigurationChanged += (sender, args) => UpdateUI();
         }
 
         private void UpdateUI()
