@@ -60,13 +60,13 @@ namespace Converter.Logic
         /// <param name="password">The password to use or NULL if no password should be used to encrypt the DB</param>
         /// <param name="handler">A handler delegate for progress notifications.</param>
         /// <param name="selectionHandler">The selection handler that allows the user to select which tables to convert</param>
-        /// <remarks>The method continues asynchronously in the background and the caller returns immediatly.</remarks>
+        /// <remarks>The method continues asynchronously in the background and the caller returns immediately.</remarks>
         public static void ConvertSqlServerToSQLiteDatabase(string sqlServerConnString, string sqlitePath, string password, SqlConversionHandler handler, SqlTableSelectionHandler selectionHandler, FailedViewDefinitionHandler viewFailureHandler, bool createTriggers, bool createViews)
         {
             // Clear cancelled flag
             _cancelled = false;
 
-            var wc = new WaitCallback(delegate(object state)
+            var wc = new WaitCallback(delegate
             {
                 try
                 {
@@ -172,31 +172,31 @@ namespace Converter.Logic
             _log.Debug("preparing to insert tables ...");
 
             // Connect to the SQL Server database
-            using (var ssconn = new SqlConnection(sqlConnString))
+            using (var sqlConnection = new SqlConnection(sqlConnString))
             {
-                ssconn.Open();
+                sqlConnection.Open();
 
                 // Connect to the SQLite database next
                 string sqliteConnString = CreateSQLiteConnectionString(sqlitePath, password);
-                using (var sqconn = new SQLiteConnection(sqliteConnString))
+                using (var sqliteConnection = new SQLiteConnection(sqliteConnString))
                 {
-                    sqconn.Open();
+                    sqliteConnection.Open();
 
                     // Go over all tables in the schema and copy their rows
                     for (int i = 0; i < schema.Count; i++)
                     {
-                        SQLiteTransaction tx = sqconn.BeginTransaction();
+                        SQLiteTransaction tx = sqliteConnection.BeginTransaction();
                         try
                         {
                             String tableQuery = BuildSqlServerTableQuery(schema[i]);
-                            var query = new SqlCommand(tableQuery, ssconn);
+                            var query = new SqlCommand(tableQuery, sqlConnection);
                             using (SqlDataReader reader = query.ExecuteReader())
                             {
                                 SQLiteCommand insert = BuildSQLiteInsert(schema[i]);
                                 int counter = 0;
                                 while (reader.Read())
                                 {
-                                    insert.Connection = sqconn;
+                                    insert.Connection = sqliteConnection;
                                     insert.Transaction = tx;
                                     var pnames = new List<String>();
                                     for (int j = 0; j < schema[i].Columns.Count; j++)
@@ -212,7 +212,7 @@ namespace Converter.Logic
                                         CheckCancelled();
                                         tx.Commit();
                                         handler(false, true, (int)(100.0 * i / schema.Count), "Added " + counter + " rows to table " + schema[i].TableName + " so far");
-                                        tx = sqconn.BeginTransaction();
+                                        tx = sqliteConnection.BeginTransaction();
                                     }
                                 }
                             }
@@ -408,15 +408,14 @@ namespace Converter.Logic
                 }
             }
 
+            String name = sb.ToString();
+
             // Avoid returning duplicate name
-            if (names.Contains(sb.ToString()))
+            if (names.Contains(name))
             {
-                return GetNormalizedName(sb + "_", names);
+                return GetNormalizedName(name + "_", names);
             }
-            else
-            {
-                return sb.ToString();
-            }
+            return name;
         }
 
         /// <summary>
@@ -426,22 +425,40 @@ namespace Converter.Logic
         /// <returns>The matched DB type</returns>
         private static DbType GetDbTypeOfColumn(ColumnSchema cs)
         {
-            if (cs.ColumnType == "tinyint") { return DbType.Byte; }
-            if (cs.ColumnType == "int") { return DbType.Int32; }
-            if (cs.ColumnType == "smallint") { return DbType.Int16; }
-            if (cs.ColumnType == "bigint") { return DbType.Int64; }
-            if (cs.ColumnType == "bit") { return DbType.Boolean; }
-            if (cs.ColumnType == "nvarchar" || cs.ColumnType == "varchar" || cs.ColumnType == "text" || cs.ColumnType == "ntext") { return DbType.String; }
-            if (cs.ColumnType == "float") { return DbType.Double; }
-            if (cs.ColumnType == "real") { return DbType.Single; }
-            if (cs.ColumnType == "blob") { return DbType.Binary; }
-            if (cs.ColumnType == "numeric") { return DbType.Double; }
-            if (cs.ColumnType == "timestamp" || cs.ColumnType == "datetime" || cs.ColumnType == "datetime2" || cs.ColumnType == "date" || cs.ColumnType == "time") { return DbType.DateTime; }
-            if (cs.ColumnType == "nchar" || cs.ColumnType == "char") { return DbType.String; }
-            if (cs.ColumnType == "uniqueidentifier" || cs.ColumnType == "guid") { return DbType.Guid; }
-            if (cs.ColumnType == "xml") { return DbType.String; }
-            if (cs.ColumnType == "sql_variant") { return DbType.Object; }
-            if (cs.ColumnType == "integer") { return DbType.Int64; }
+            Dictionary<String, DbType> typeMapping = new Dictionary<String, DbType>
+            {
+                { "tinyint", DbType.Byte }, 
+                { "int", DbType.Int32 }, 
+                { "smallint", DbType.Int16 }, 
+                { "bigint", DbType.Int64 }, 
+                { "bit", DbType.Boolean }, 
+                { "nvarchar", DbType.String }, 
+                { "varchar", DbType.String }, 
+                { "text", DbType.String }, 
+                { "ntext", DbType.String }, 
+                { "float", DbType.Double }, 
+                { "real", DbType.Single }, 
+                { "blob", DbType.Binary }, 
+                { "numeric", DbType.Double }, 
+                { "timestamp", DbType.DateTime }, 
+                { "datetime", DbType.DateTime }, 
+                { "datetime2", DbType.DateTime }, 
+                { "date", DbType.DateTime }, 
+                { "time", DbType.DateTime }, 
+                { "nchar", DbType.String }, 
+                { "char", DbType.String }, 
+                { "uniqueidentifier", DbType.Guid }, 
+                { "guid", DbType.Guid }, 
+                { "xml", DbType.String }, 
+                { "sql_variant", DbType.Object }, 
+                { "integer", DbType.Int64 },
+            };
+
+            var type = cs.ColumnType;
+            if (typeMapping.ContainsKey(type))
+            {
+                return typeMapping[type];
+            }
 
             _log.Error("illegal db type found");
             throw new ApplicationException("Illegal DB type found (" + cs.ColumnType + ")");
@@ -494,7 +511,7 @@ namespace Converter.Logic
 
             var orderedTables = schema.Tables.OrderBy(obj => obj.TableName).AsParallel();
 
-            var parallelResultTables = Parallel.ForEach(orderedTables, dt =>
+            Parallel.ForEach(orderedTables, dt =>
             {
                 using (var conn = new SQLiteConnection(sqliteConnString))
                 {
@@ -519,18 +536,12 @@ namespace Converter.Logic
                 }
             });
 
-            // The Parallel.ForEach statement executes synchronously.  We don't have to wait for it complete, because we won't reach this point until it is.
-            //while (!parallelResultTables.IsCompleted)
-            //{
-            //    Thread.Sleep(1000);
-            //}
-
             // Create all views in the new database
             int viewCount = 0;
             if (createViews)
             {
                 var orderedViews = schema.Views.OrderBy(obj => obj.ViewName).AsParallel();
-                var parallelResultViews = Parallel.ForEach(orderedViews, vs =>
+                Parallel.ForEach(orderedViews, vs =>
                 {
                     using (var conn = new SQLiteConnection(sqliteConnString))
                     {
@@ -551,12 +562,6 @@ namespace Converter.Logic
 
                     _log.Debug("added schema for SQLite view [" + vs.ViewName + "]");
                 });
-
-                // The Parallel.ForEach statement executes synchronously.  We don't have to wait for it complete, because we won't reach this point until it is.
-                //while (!parallelResultViews.IsCompleted)
-                //{
-                //    Thread.Sleep(1000);
-                //}
             }
 
             _log.Debug("finished adding all table/view schemas for SQLite database");
