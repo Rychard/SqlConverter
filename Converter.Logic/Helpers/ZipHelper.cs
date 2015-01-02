@@ -25,15 +25,23 @@ namespace Converter.Logic.Helpers
                     String archivePath = content.Key; // The location of the file as it appears in the archive.
                     String filePath = content.Value; // The location of the file as it exists on disk.
 
+                    // Skip files that have no path.
+                    if (String.IsNullOrWhiteSpace(filePath)) { continue; }
+
                     // Skip files that do not exist.
                     if (!File.Exists(filePath)) { continue; }
 
-                    var fi = new FileInfo(filePath);
+                    FileInfo fi = new FileInfo(filePath);
 
-                    string entryName = archivePath; // Makes the name in zip based on the folder
-                    entryName = ZipEntry.CleanName(entryName); // Removes drive from name and fixes slash direction
+                    // Makes the name in zip based on the folder
+                    String entryName = archivePath;
+
+                    // Removes drive from name and fixes slash direction
+                    entryName = ZipEntry.CleanName(entryName); 
+                    
+                    
                     var newEntry = new ZipEntry(entryName);
-                    newEntry.DateTime = fi.LastWriteTime; // Note the zip format stores 2 second granularity
+                    newEntry.DateTime = fi.LastWriteTime; // Note: Zip format stores 2 second granularity
                     newEntry.Size = fi.Length;
                     zipStream.PutNextEntry(newEntry);
 

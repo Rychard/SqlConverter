@@ -24,10 +24,10 @@ namespace Converter.Logic.Helpers
                 String serializedObject = TryXmlSerialize<T>(obj, out success);
                 if (success)
                 {
-                    var streamWriter = new StreamWriter(filename);
-                    streamWriter.Write(serializedObject);
-                    streamWriter.Flush();
-                    streamWriter.Close();
+                    using (var streamWriter = new StreamWriter(filename))
+                    {
+                        streamWriter.Write(serializedObject);
+                    }
                     return true;
                 }
                 return false;
@@ -39,7 +39,7 @@ namespace Converter.Logic.Helpers
             }
         }
 
-        // <summary>
+        /// <summary>
         /// Serializes the specified object to XML, and stores it with the specified filename.
         /// </summary>
         /// <param name="obj">The object to be serialized.</param>
@@ -97,15 +97,17 @@ namespace Converter.Logic.Helpers
         {
             try
             {
-                var streamReader = new StreamReader(filename);
-                String serializedObject = streamReader.ReadToEnd();
-                streamReader.Close();
-                streamReader.Dispose();
-                Boolean success;
-                Object deserializedObject = TryXmlDeserialize<T>(serializedObject, out success);
-                if (success)
+                using (var streamReader = new StreamReader(filename))
                 {
-                    return (T)deserializedObject;
+                    String serializedObject = streamReader.ReadToEnd();
+                    streamReader.Close();
+                    streamReader.Dispose();
+                    Boolean success;
+                    Object deserializedObject = TryXmlDeserialize<T>(serializedObject, out success);
+                    if (success)
+                    {
+                        return (T)deserializedObject;
+                    }
                 }
             }
             catch (Exception ex)
@@ -123,12 +125,10 @@ namespace Converter.Logic.Helpers
         public static T TryXmlDeserialize<T>(String serializedObject, out Boolean success)
         {
             var stringReader = new StringReader(serializedObject);
-            XmlSerializer serializer;
-            XmlReader xmlReader;
             try
             {
-                serializer = new XmlSerializer(typeof(T));
-                xmlReader = XmlReader.Create(stringReader);
+                XmlSerializer serializer = new XmlSerializer(typeof(T));
+                XmlReader xmlReader = XmlReader.Create(stringReader);
                 if (serializer.CanDeserialize(xmlReader))
                 {
                     object obj = serializer.Deserialize(xmlReader);

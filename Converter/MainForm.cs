@@ -456,11 +456,10 @@ namespace Converter.WinForms
             if (result == DialogResult.OK)
             {
                 ConversionConfiguration config = this._manager.CurrentConfiguration;
-                var sw = new StreamWriter(dlg.OpenFile());
-                sw.Write(config.SerializedXml);
-                sw.Flush();
-                sw.Close();
-                sw.Dispose();
+                using (var sw = new StreamWriter(dlg.OpenFile()))
+                {
+                    sw.Write(config.SerializedXml);
+                }
             }
         }
 

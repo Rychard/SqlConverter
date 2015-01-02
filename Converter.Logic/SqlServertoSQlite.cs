@@ -492,7 +492,9 @@ namespace Converter.Logic
             Object stateLocker = new Object();
             int tableCount = 0;
 
-            var parallelResultTables = Parallel.ForEach(schema.Tables, dt =>
+            var orderedTables = schema.Tables.OrderBy(obj => obj.TableName).AsParallel();
+
+            var parallelResultTables = Parallel.ForEach(orderedTables, dt =>
             {
                 using (var conn = new SQLiteConnection(sqliteConnString))
                 {
@@ -517,16 +519,18 @@ namespace Converter.Logic
                 }
             });
 
-            while (!parallelResultTables.IsCompleted)
-            {
-                System.Threading.Thread.Sleep(1000);
-            }
+            // The Parallel.ForEach statement executes synchronously.  We don't have to wait for it complete, because we won't reach this point until it is.
+            //while (!parallelResultTables.IsCompleted)
+            //{
+            //    Thread.Sleep(1000);
+            //}
 
             // Create all views in the new database
             int viewCount = 0;
             if (createViews)
             {
-                var parallelResultViews = Parallel.ForEach(schema.Views, vs =>
+                var orderedViews = schema.Views.OrderBy(obj => obj.ViewName).AsParallel();
+                var parallelResultViews = Parallel.ForEach(orderedViews, vs =>
                 {
                     using (var conn = new SQLiteConnection(sqliteConnString))
                     {
@@ -548,10 +552,11 @@ namespace Converter.Logic
                     _log.Debug("added schema for SQLite view [" + vs.ViewName + "]");
                 });
 
-                while (!parallelResultViews.IsCompleted)
-                {
-                    System.Threading.Thread.Sleep(1000);
-                }
+                // The Parallel.ForEach statement executes synchronously.  We don't have to wait for it complete, because we won't reach this point until it is.
+                //while (!parallelResultViews.IsCompleted)
+                //{
+                //    Thread.Sleep(1000);
+                //}
             }
 
             _log.Debug("finished adding all table/view schemas for SQLite database");
@@ -577,29 +582,21 @@ namespace Converter.Logic
                 SqlServerToSQLite.Log.Error("Error in \"AddSQLiteView\"", ex);
                 tx.Rollback();
 
-                if (handler != null)
-                {
-                    var updated = new ViewSchema();
-                    updated.ViewName = vs.ViewName;
-                    updated.ViewSQL = vs.ViewSQL;
+                // Rethrow the exception if it the caller didn't supply a handler.
+                if (handler == null) { throw; }
+                
+                var updated = new ViewSchema();
+                updated.ViewName = vs.ViewName;
+                updated.ViewSQL = vs.ViewSQL;
 
-                    // Ask the user to supply the new view definition SQL statement
-                    String sql = handler(updated);
+                // Ask the user to supply the new view definition SQL statement
+                String sql = handler(updated);
 
-                    if (sql == null)
-                    {
-                        return; // Discard the view
-                    }
-                    else
-                    {
-                        // Try to re-create the view with the user-supplied view definition SQL
-                        updated.ViewSQL = sql;
-                        AddSQLiteView(conn, updated, handler);
-                    }
-                }
-                else
+                if (sql != null)
                 {
-                    throw;
+                    // Try to re-create the view with the user-supplied view definition SQL
+                    updated.ViewSQL = sql;
+                    AddSQLiteView(conn, updated, handler);
                 }
             }
         }
@@ -813,8 +810,6 @@ namespace Converter.Logic
         /// <summary>
         /// Check if the DEFAULT clause is valid by SQLite standards
         /// </summary>
-        /// <param name="value"></param>
-        /// <returns></returns>
         private static bool IsValidDefaultValue(string value)
         {
             if (IsSingleQuoted(value))
@@ -869,21 +864,23 @@ namespace Converter.Logic
         /// <param name="dataType">The datatype to validate.</param>
         public static void ValidateDataType(string dataType)
         {
-            if (dataType == "int" || dataType == "smallint" ||
-                dataType == "bit" || dataType == "float" ||
-                dataType == "real" || dataType == "nvarchar" ||
-                dataType == "varchar" || dataType == "timestamp" ||
-                dataType == "varbinary" || dataType == "image" ||
-                dataType == "text" || dataType == "ntext" ||
-                dataType == "bigint" ||
-                dataType == "char" || dataType == "numeric" ||
-                dataType == "binary" || dataType == "smalldatetime" ||
-                dataType == "smallmoney" || dataType == "money" ||
-                dataType == "tinyint" || dataType == "uniqueidentifier" ||
-                dataType == "xml" || dataType == "sql_variant" || dataType == "datetime2" || dataType == "date" || dataType == "time" ||
-                dataType == "decimal" || dataType == "nchar" || dataType == "datetime")
-                return;
-            throw new ApplicationException("Validation failed for data type [" + dataType + "]");
+            List<String> validTypes = new List<String>
+            {
+                "bigint", "binary", "bit", "char",
+                "date", "datetime", "datetime2", "decimal",
+                "float", "image", "int", "money",
+                "nchar", "ntext", "numeric", "nvarchar",
+                "real", "smalldatetime", "smallint", "smallmoney",
+                "sql_variant", "text", "time", "timestamp",
+                "tinyint", "uniqueidentifier", "varbinary", "varchar",
+                "xml"
+            };
+
+            // If the specified type isn't in our list of valid types, it's not valid.
+            if (!validTypes.Contains(dataType))
+            {
+                throw new ApplicationException("Validation failed for data type [" + dataType + "]");
+            }
         }
 
         /// <summary>
@@ -936,12 +933,6 @@ namespace Converter.Logic
             }
         }
 
-
-
-        
-
-        
-
         /// <summary>
         /// More adjustments for the DEFAULT value clause.
         /// </summary>
@@ -977,8 +968,8 @@ namespace Converter.Logic
             }
             builder.PageSize = 4096;
             builder.UseUTF16Encoding = true;
-            string connstring = builder.ConnectionString;
-            return connstring;
+            string connectionString = builder.ConnectionString;
+            return connectionString;
         }
 
         private static void AddTriggersForForeignKeys(string sqlitePath, IEnumerable<TableSchema> schema, string password, SqlConversionHandler handler)
