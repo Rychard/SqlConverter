@@ -467,6 +467,7 @@ namespace Converter.WinForms
             dlg.Filter = "XML files (*.xml)|*.xml|All files (*.*)|*.*";
             dlg.RestoreDirectory = true; //this opens the last used directory location instead of defaulting to desktop
             dlg.Multiselect = false;
+
             var result = dlg.ShowDialog();
             if (result == DialogResult.OK)
             {
@@ -492,7 +493,7 @@ namespace Converter.WinForms
             dlg.DefaultExt = "xml";
             dlg.FileName = "SqlConverter.Configuration.xml";
             dlg.Filter = "XML files (*.xml)|*.xml|All files (*.*)|*.*";
-            dlg.InitialDirectory = Environment.GetFolderPath(Environment.SpecialFolder.Desktop);
+            dlg.RestoreDirectory = true; //this opens the last used directory location instead of defaulting to desktop
 
             var result = dlg.ShowDialog();
             if (result == DialogResult.OK)
