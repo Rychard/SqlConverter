@@ -154,7 +154,7 @@ namespace Converter.Logic
         /// <summary>
         /// Gets a list of table schemas from the specified connection string.
         /// </summary>
-        private List<TableSchema> GetTableSchemas(SqlConversionHandler handler = null)
+        private List<TableSchema> GetTableSchemas(SqlConversionProgressReportingHandler progressReportingHandler = null)
         {
             List<Tuple<String, String>> tableNamesAndSchemas = new List<Tuple<String, String>>();
 
@@ -203,9 +203,9 @@ namespace Converter.Logic
                     tablesProcessed = count; // Copy the current number of processed tables to a local for future usage.
                 }
                 SqlServerToSQLite.CheckCancelled();
-                if (handler != null)
+                if (progressReportingHandler != null)
                 {
-                    handler(false, true, (int)(count * 50.0 / totalTables), "Parsed table " + tableName);
+                    progressReportingHandler(false, true, (int)(count * 50.0 / totalTables), "Parsed table " + tableName);
                 }
                 _log.Debug("parsed table schema for [" + tableName + "]");
 
@@ -427,7 +427,7 @@ namespace Converter.Logic
             return res;
         }
 
-        private List<ViewSchema> GetViews(SqlConversionHandler handler = null)
+        private List<ViewSchema> GetViews(SqlConversionProgressReportingHandler progressReportingHandler = null)
         {
             var views = new List<ViewSchema>();
             
@@ -463,9 +463,9 @@ namespace Converter.Logic
             {
                 var vs = views[i];
                 count++;
-                if (handler != null)
+                if (progressReportingHandler != null)
                 {
-                    handler(false, true, 50 + (int)(count * 50.0 / totalViews), "Parsed view " + vs.ViewName);
+                    progressReportingHandler(false, true, 50 + (int)(count * 50.0 / totalViews), "Parsed view " + vs.ViewName);
                 }
 
                 int viewsProcessed;
@@ -475,9 +475,9 @@ namespace Converter.Logic
                     viewsProcessed = count; // Copy the current number of processed views to a local for future usage.
                 }
                 SqlServerToSQLite.CheckCancelled();
-                if (handler != null)
+                if (progressReportingHandler != null)
                 {
-                    handler(false, true, (int)(count * 50.0 / totalViews), "Parsed table " + vs.ViewName);
+                    progressReportingHandler(false, true, (int)(count * 50.0 / totalViews), "Parsed table " + vs.ViewName);
                 }
                 _log.Debug("parsed view schema for [" + vs.ViewName + "]");
 

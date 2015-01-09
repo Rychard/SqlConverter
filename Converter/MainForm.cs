@@ -30,15 +30,29 @@ namespace Converter.WinForms
             {
                 _isLoading = true;
                 ConversionConfiguration config = this._manager.CurrentConfiguration;
+                
+                var filePathWithReplacedEnvironmentValues = Environment.ExpandEnvironmentVariables(config.SqLiteDatabaseFilePath);
 
                 txtSqlAddress.Text = config.SqlServerAddress;
-                txtSQLitePath.Text = config.SqLiteDatabaseFilePath;
+                txtSQLitePath.Text = filePathWithReplacedEnvironmentValues;
                 txtPassword.Text = config.EncryptionPassword;
                 txtUserDB.Text = config.User;
                 txtPassDB.Text = config.Password;
 
-                int cboDatabaseIndex = cboDatabases.Items.Add(config.DatabaseName);
-                cboDatabases.SelectedIndex = cboDatabaseIndex;
+                if (!String.IsNullOrWhiteSpace(config.DatabaseName))
+                {
+                    int cboDatabaseIndex;
+                    if (cboDatabases.Items.Contains(config.DatabaseName))
+                    {
+                        cboDatabaseIndex = cboDatabases.Items.IndexOf(config.DatabaseName);
+                    }
+                    else
+                    {
+                        cboDatabaseIndex = cboDatabases.Items.Add(config.DatabaseName);
+                    }
+                    cboDatabases.SelectedIndex = cboDatabaseIndex;
+                }
+                
 
                 cbxEncrypt.Checked = !(String.IsNullOrWhiteSpace(config.EncryptionPassword));
                 cbxTriggers.Checked = config.CreateTriggersEnforcingForeignKeys;
@@ -47,17 +61,17 @@ namespace Converter.WinForms
 
                 if (config.IntegratedSecurity)
                 {
-                    lblPassword.Visible = false;
-                    lblUser.Visible = false;
-                    txtPassDB.Visible = false;
-                    txtUserDB.Visible = false;
+                    lblPassword.Enabled = false;
+                    lblUser.Enabled = false;
+                    txtPassDB.Enabled = false;
+                    txtUserDB.Enabled = false;
                 }
                 else
                 {
-                    lblPassword.Visible = true;
-                    lblUser.Visible = true;
-                    txtPassDB.Visible = true;
-                    txtUserDB.Visible = true;
+                    lblPassword.Enabled = true;
+                    lblUser.Enabled = true;
+                    txtPassDB.Enabled = true;
+                    txtUserDB.Enabled = true;
                 }
                 _isLoading = false;
 
@@ -97,13 +111,29 @@ namespace Converter.WinForms
 
         private void btnSet_Click(object sender, EventArgs e)
         {
-            var databases = DatabaseHelper.GetDatabases(_manager.CurrentConfiguration).ToArray();
+            var databaseList = DatabaseHelper.GetDatabases(_manager.CurrentConfiguration);
+            if (databaseList == null)
+            {
+                MessageBox.Show("An error occurred while connecting to SQL Server.  Please ensure that you have entered the correct credentials, and try again.", "Connection Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                return;
+            }
+            
+            // Put them in the correct order.
+            var databases = databaseList.OrderBy(obj => obj).ToArray();
 
+            // Remove existing items.
+            cboDatabases.Items.Clear();
+
+            // Add records, so long as they don't already appear in the list.
             foreach (var database in databases)
             {
-                cboDatabases.Items.Add(database);
+                if (!cboDatabases.Items.Contains(database))
+                {
+                    cboDatabases.Items.Add(database);    
+                }
             }
 
+            // If there's at least one entry in the list, select the first item.
             if (cboDatabases.Items.Count > 0)
             {
                 cboDatabases.SelectedIndex = 0;
@@ -226,11 +256,13 @@ namespace Converter.WinForms
             string sqlConnString = config.ConnectionString;
 
             Cursor = Cursors.WaitCursor;
-            SqlConversionHandler handler = OnSqlConversionHandler;
-            SqlTableSelectionHandler selectionHandler = OnSqlTableSelectionHandler;
+            SqlConversionProgressReportingHandler progressReportingHandler = OnSqlConversionProgressReportingHandler;
+            SqlTableSelectionHandler selectionHandlerDefinition = OnSqlTableDefinitionSelectionHandler;
+            SqlTableSelectionHandler selectionHandlerRecords = OnSqlTableRecordSelectionHandler;
             FailedViewDefinitionHandler viewFailureHandler = OnFailedViewDefinitionHandler;
 
-            SqlServerToSQLite.ConvertSqlServerToSQLiteDatabase(sqlConnString, config.SqLiteDatabaseFilePath, config.EncryptionPassword, handler, selectionHandler, viewFailureHandler, config.CreateTriggersEnforcingForeignKeys, config.TryToCreateViews);
+            var filePathWithReplacedEnvironmentValues = Environment.ExpandEnvironmentVariables(config.SqLiteDatabaseFilePath);
+            SqlServerToSQLite.ConvertSqlServerToSQLiteDatabase(sqlConnString, filePathWithReplacedEnvironmentValues, config.EncryptionPassword, progressReportingHandler, selectionHandlerDefinition, selectionHandlerRecords, viewFailureHandler, config.CreateTriggersEnforcingForeignKeys, config.TryToCreateViews);
         }
 
         private void SaveLocationDoesNotExist()
@@ -242,7 +274,9 @@ namespace Converter.WinForms
         {
             try
             {
-                String directory = Path.GetDirectoryName(_manager.CurrentConfiguration.SqLiteDatabaseFilePath);
+                String filePath = _manager.CurrentConfiguration.SqLiteDatabaseFilePath;
+                var filePathWithReplacedEnvironmentValues = Environment.ExpandEnvironmentVariables(filePath);
+                String directory = Path.GetDirectoryName(filePathWithReplacedEnvironmentValues);
 
                 // If the location is empty, it can't possibly exist.
                 if (String.IsNullOrWhiteSpace(directory)) { return false; }
@@ -283,44 +317,63 @@ namespace Converter.WinForms
             return updated;
         }
 
-        private List<TableSchema> OnSqlTableSelectionHandler(List<TableSchema> schema)
+        private List<TableSchema> OnSqlTableDefinitionSelectionHandler(List<TableSchema> schema)
         {
             var config = this._manager.CurrentConfiguration;
+            Boolean hasExcludedTableDefinitions = (config.ExcludedTableDefinitions.Count > 0);
 
-            Boolean hasConfigurationTables = (config.SelectedTables.Count > 0);
-
-            Boolean useSaved = false;
-            if (hasConfigurationTables)
+            if (hasExcludedTableDefinitions)
             {
-                var response = MessageBox.Show("Tables are marked as selected in the configuration file.  Would you like to re-use your selection?", "Confirm", MessageBoxButtons.YesNo, MessageBoxIcon.Question, MessageBoxDefaultButton.Button1);
-                if (response == DialogResult.Yes)
+                return schema.Where(tableSchema => !config.ExcludedTableDefinitions.Contains(tableSchema.TableName)).ToList();
+            }
+
+            var updated = new List<TableSchema>();
+            Invoke(new MethodInvoker(() =>
+            {
+                // Allow the user to select which tables to include by showing him the table selection dialog.
+                var dlg = new TableSelectionDialog("Select Table Definitions To Include");
+                DialogResult res = dlg.ShowTables(schema, this);
+                if (res == DialogResult.OK)
                 {
-                    useSaved = true;
+                    updated = dlg.IncludedTables;
                 }
-            }
-
-            if (!useSaved)
-            {
-                List<TableSchema> updated = null;
-                Invoke(new MethodInvoker(() =>
-                {
-                    // Allow the user to select which tables to include by showing him the table selection dialog.
-                    var dlg = new TableSelectionDialog();
-                    DialogResult res = dlg.ShowTables(schema, this);
-                    if (res == DialogResult.OK)
-                    {
-                        updated = dlg.IncludedTables;
-                    }
-                }));
+            }));
                 
-                List<String> selectedTables = updated.Select(obj => obj.TableName).ToList();
-                config.SelectedTables = selectedTables;
-                return updated;
-            }
-            return schema.Where(tableSchema => config.SelectedTables.Contains(tableSchema.TableName)).ToList();
+            List<String> selectedTables = updated.Select(obj => obj.TableName).ToList();
+            var excludedTables = schema.Select(obj => obj.TableName).Except(selectedTables).ToList();
+            config.ExcludedTableDefinitions = excludedTables;
+            return updated;
         }
 
-        private void OnSqlConversionHandler(bool done, bool success, int percent, string msg)
+        private List<TableSchema> OnSqlTableRecordSelectionHandler(List<TableSchema> schema)
+        {
+            var config = this._manager.CurrentConfiguration;
+            Boolean hasExcludedTableRecords = (config.ExcludedTableRecords.Count > 0);
+
+            if (hasExcludedTableRecords)
+            {
+                return schema.Where(tableSchema => !config.ExcludedTableDefinitions.Contains(tableSchema.TableName)).ToList();
+            }
+
+            var updated = new List<TableSchema>();
+            Invoke(new MethodInvoker(() =>
+            {
+                // Allow the user to select which tables to include by showing him the table selection dialog.
+                var dlg = new TableSelectionDialog("Select Table Data To Include");
+                DialogResult res = dlg.ShowTables(schema, this);
+                if (res == DialogResult.OK)
+                {
+                    updated = dlg.IncludedTables;
+                }
+            }));
+
+            List<String> selectedTables = updated.Select(obj => obj.TableName).ToList();
+            var excludedTables = schema.Select(obj => obj.TableName).Except(selectedTables).ToList();
+            config.ExcludedTableRecords = excludedTables;
+            return updated;
+        }
+
+        private void OnSqlConversionProgressReportingHandler(bool done, bool success, int percent, string msg)
         {
             Invoke(new MethodInvoker(() => SqlConversionHandler(done, success, percent, msg)));
         }

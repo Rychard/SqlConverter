@@ -31,7 +31,10 @@ namespace Converter.Logic.Configuration
 
         public ConfigurationManager()
         {
-            CurrentConfiguration = new ConversionConfiguration();
+            CurrentConfiguration = new ConversionConfiguration
+            {
+                IntegratedSecurity = false,
+            };
         }
     }
 }

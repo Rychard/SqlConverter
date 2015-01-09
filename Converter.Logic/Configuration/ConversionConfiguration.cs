@@ -20,7 +20,8 @@ namespace Converter.Logic.Configuration
         private String _encryptionPassword;
         private Boolean _createTriggersEnforcingForeignKeys;
         private Boolean _tryToCreateViews;
-        private List<String> _selectedTables;
+        private List<String> _excludedTableDefinitions;
+        private List<String> _excludedTableRecords;
 
         #endregion
 
@@ -136,14 +137,25 @@ namespace Converter.Logic.Configuration
             }
         }
 
-        public List<String> SelectedTables
+        public List<String> ExcludedTableDefinitions
         {
-            get { return this._selectedTables; }
+            get { return _excludedTableDefinitions; }
             set
             {
-                if (value.Equals(this._selectedTables)) return;
-                this._selectedTables = value;
-                this.OnPropertyChanged("SelectedTables");
+                if (Equals(value, _excludedTableDefinitions)) return;
+                _excludedTableDefinitions = value;
+                OnPropertyChanged("ExcludedTableDefinitions");
+            }
+        }
+
+        public List<String> ExcludedTableRecords
+        {
+            get { return _excludedTableRecords; }
+            set
+            {
+                if (Equals(value, _excludedTableRecords)) return;
+                _excludedTableRecords = value;
+                OnPropertyChanged("ExcludedTableRecords");
             }
         }
 
@@ -192,7 +204,8 @@ namespace Converter.Logic.Configuration
             _encryptionPassword = "";
             _createTriggersEnforcingForeignKeys = false;
             _tryToCreateViews = false;
-            _selectedTables = new List<String>();
+            _excludedTableDefinitions = new List<String>();
+            _excludedTableRecords = new List<String>();
         }
 
         private static string GetSqlServerConnectionString(string address, string db)

@@ -58,10 +58,10 @@ namespace Converter.Logic
         /// <param name="sqlServerConnString">The connection string to the SQL Server database.</param>
         /// <param name="sqlitePath">The path to the SQLite database file that needs to get created.</param>
         /// <param name="password">The password to use or NULL if no password should be used to encrypt the DB</param>
-        /// <param name="handler">A handler delegate for progress notifications.</param>
+        /// <param name="progressReportingHandler">A handler delegate for progress notifications.</param>
         /// <param name="selectionHandler">The selection handler that allows the user to select which tables to convert</param>
         /// <remarks>The method continues asynchronously in the background and the caller returns immediately.</remarks>
-        public static void ConvertSqlServerToSQLiteDatabase(string sqlServerConnString, string sqlitePath, string password, SqlConversionHandler handler, SqlTableSelectionHandler selectionHandler, FailedViewDefinitionHandler viewFailureHandler, Boolean createTriggers, Boolean createViews)
+        public static void ConvertSqlServerToSQLiteDatabase(string sqlServerConnString, string sqlitePath, string password, SqlConversionProgressReportingHandler progressReportingHandler, SqlTableSelectionHandler selectionHandlerDefinition, SqlTableSelectionHandler selectionHandlerRecord, FailedViewDefinitionHandler viewFailureHandler, Boolean createTriggers, Boolean createViews)
         {
             // Clear cancelled flag
             _cancelled = false;
@@ -72,15 +72,15 @@ namespace Converter.Logic
                 {
                     _isActive = true;
                     String sqlitePathResolved = TemplateToFilename(sqlitePath);
-                    ConvertSqlServerDatabaseToSQLiteFile(sqlServerConnString, sqlitePathResolved, password, handler, selectionHandler, viewFailureHandler, createTriggers, createViews);
+                    ConvertSqlServerDatabaseToSQLiteFile(sqlServerConnString, sqlitePathResolved, password, progressReportingHandler, selectionHandlerDefinition, selectionHandlerRecord, viewFailureHandler, createTriggers, createViews);
                     _isActive = false;
-                    handler(true, true, 100, "Finished converting database");
+                    progressReportingHandler(true, true, 100, "Finished converting database");
                 }
                 catch (Exception ex)
                 {
                     _log.Error("Failed to convert SQL Server database to SQLite database", ex);
                     _isActive = false;
-                    handler(true, false, 100, ex.Message);
+                    progressReportingHandler(true, false, 100, ex.Message);
                 }
             });
         }
@@ -92,9 +92,9 @@ namespace Converter.Logic
         /// <param name="sqlConnString">The SQL Server connection string</param>
         /// <param name="sqlitePath">The path to the generated SQLite database file</param>
         /// <param name="password">The password to use or NULL if no password should be used to encrypt the DB</param>
-        /// <param name="handler">A handler to handle progress notifications.</param>
+        /// <param name="progressReportingHandler">A handler to handle progress notifications.</param>
         /// <param name="selectionHandler">The selection handler which allows the user to select which tables to convert.</param>
-        private static void ConvertSqlServerDatabaseToSQLiteFile(String sqlConnString, String sqlitePath, String password, SqlConversionHandler handler, SqlTableSelectionHandler selectionHandler, FailedViewDefinitionHandler viewFailureHandler, Boolean createTriggers, Boolean createViews)
+        private static void ConvertSqlServerDatabaseToSQLiteFile(String sqlConnString, String sqlitePath, String password, SqlConversionProgressReportingHandler progressReportingHandler, SqlTableSelectionHandler selectionHandlerDefinition, SqlTableSelectionHandler selectionHandlerRecord, FailedViewDefinitionHandler viewFailureHandler, Boolean createTriggers, Boolean createViews)
         {
             // Delete the destination file (only if it exists)
             if (DeleteFile(sqlitePath))
@@ -109,7 +109,7 @@ namespace Converter.Logic
                 int total = args.TablesProcessed + args.TablesRemaining;
                 int percentage = (int) ((args.TablesProcessed/(Double) total)*100);
                 String msg = String.Format("Parsed table {0}", args.LastProcessedTable.TableName);
-                handler(false, false, percentage, msg);
+                progressReportingHandler(false, false, percentage, msg);
             };
 
             schemaReader.ViewSchemaReaderProgressChanged += (sender, args) =>
@@ -117,32 +117,32 @@ namespace Converter.Logic
                 int total = args.ViewsProcessed + args.ViewsRemaining;
                 int percentage = (int) ((args.ViewsProcessed/(Double) total)*100);
                 String msg = String.Format("Parsed view {0}", args.LastProcessedView.ViewName);
-                handler(false, false, percentage, msg);
+                progressReportingHandler(false, false, percentage, msg);
             };
 
             schemaReader.PopulateTableSchema();
             schemaReader.PopulateViewSchema();
 
-            var includeSchema = selectionHandler(schemaReader.Tables);
+            var includeSchema = selectionHandlerDefinition(schemaReader.Tables);
             schemaReader.TablesIncludeSchema = includeSchema;
 
-            var includeData = selectionHandler(includeSchema);
+            var includeData = selectionHandlerRecord(includeSchema);
             schemaReader.TablesIncludeData = includeData;
 
             // Read the schema of the SQL Server database into a memory structure
             DatabaseSchema ds = schemaReader.GetDatabaseSchema();
 
             // Create the SQLite database and apply the schema
-            CreateSQLiteDatabase(sqlitePath, ds, password, handler, viewFailureHandler, createViews);
+            CreateSQLiteDatabase(sqlitePath, ds, password, progressReportingHandler, viewFailureHandler, createViews);
 
             // Copy all rows from SQL Server tables to the newly created SQLite database
             var tablesToCopy = ds.Tables.Where(obj => includeData.Any(include => include.TableName == obj.TableName)).ToList();
-            CopySqlServerRowsToSQLiteDB(sqlConnString, sqlitePath, tablesToCopy, password, handler);
+            CopySqlServerRowsToSQLiteDB(sqlConnString, sqlitePath, tablesToCopy, password, progressReportingHandler);
 
             // Add triggers based on foreign key constraints
             if (createTriggers)
             {
-                AddTriggersForForeignKeys(sqlitePath, ds.Tables, password, handler);
+                AddTriggersForForeignKeys(sqlitePath, ds.Tables, password, progressReportingHandler);
             }
         }
 
@@ -166,11 +166,11 @@ namespace Converter.Logic
         /// <param name="sqlitePath">The path to the SQLite database file.</param>
         /// <param name="schema">The schema of the SQL Server database.</param>
         /// <param name="password">The password to use for encrypting the file</param>
-        /// <param name="handler">A handler to handle progress notifications.</param>
-        private static void CopySqlServerRowsToSQLiteDB(String sqlConnString, String sqlitePath, List<TableSchema> schema, String password, SqlConversionHandler handler)
+        /// <param name="progressReportingHandler">A handler to handle progress notifications.</param>
+        private static void CopySqlServerRowsToSQLiteDB(String sqlConnString, String sqlitePath, List<TableSchema> schema, String password, SqlConversionProgressReportingHandler progressReportingHandler)
         {
             CheckCancelled();
-            handler(false, true, 0, "Preparing to insert tables...");
+            progressReportingHandler(false, true, 0, "Preparing to insert tables...");
             _log.Debug("preparing to insert tables ...");
 
             // Connect to the SQL Server database
@@ -213,7 +213,7 @@ namespace Converter.Logic
                                     {
                                         CheckCancelled();
                                         tx.Commit();
-                                        handler(false, true, (int)(100.0 * i / schema.Count), "Added " + counter + " rows to table " + schema[i].TableName + " so far");
+                                        progressReportingHandler(false, true, (int)(100.0 * i / schema.Count), "Added " + counter + " rows to table " + schema[i].TableName + " so far");
                                         tx = sqliteConnection.BeginTransaction();
                                     }
                                 }
@@ -222,7 +222,7 @@ namespace Converter.Logic
                             CheckCancelled();
                             tx.Commit();
 
-                            handler(false, true, (int)(100.0 * i / schema.Count), "Finished inserting rows for table " + schema[i].TableName);
+                            progressReportingHandler(false, true, (int)(100.0 * i / schema.Count), "Finished inserting rows for table " + schema[i].TableName);
                             _log.Debug("finished inserting all rows for table [" + schema[i].TableName + "]");
                         }
                         catch (Exception ex)
@@ -450,8 +450,8 @@ namespace Converter.Logic
                 return typeMapping[type];
             }
 
-            _log.Error("illegal db type found");
-            throw new ApplicationException("Illegal DB type found (" + cs.ColumnType + ")");
+            _log.Error("Illegal database type found");
+            throw new ApplicationException("Illegal database type found (" + cs.ColumnType + ")");
         }
 
         /// <summary>
@@ -482,8 +482,8 @@ namespace Converter.Logic
         /// <param name="sqlitePath">The path to the generated DB file.</param>
         /// <param name="schema">The schema of the SQL server database.</param>
         /// <param name="password">The password to use for encrypting the DB or null if non is needed.</param>
-        /// <param name="handler">A handle for progress notifications.</param>
-        private static void CreateSQLiteDatabase(string sqlitePath, DatabaseSchema schema, string password, SqlConversionHandler handler, FailedViewDefinitionHandler viewFailureHandler, bool createViews)
+        /// <param name="progressReportingHandler">A handle for progress notifications.</param>
+        private static void CreateSQLiteDatabase(string sqlitePath, DatabaseSchema schema, string password, SqlConversionProgressReportingHandler progressReportingHandler, FailedViewDefinitionHandler viewFailureHandler, bool createViews)
         {
             _log.Debug("Creating SQLite database...");
 
@@ -520,7 +520,7 @@ namespace Converter.Logic
                         tableCount++;    
                     }
                     CheckCancelled();
-                    handler(false, true, (int)(tableCount * 50.0 / schema.Tables.Count), "Added table " + dt.TableName + " to the SQLite database");
+                    progressReportingHandler(false, true, (int)(tableCount * 50.0 / schema.Tables.Count), "Added table " + dt.TableName + " to the SQLite database");
 
                     _log.Debug("added schema for SQLite table [" + dt.TableName + "]");
                 }
@@ -548,7 +548,7 @@ namespace Converter.Logic
                     }
                     viewCount++;
                     CheckCancelled();
-                    handler(false, true, 50 + (int) (viewCount*50.0/schema.Views.Count), "Added view " + vs.ViewName + " to the SQLite database");
+                    progressReportingHandler(false, true, 50 + (int) (viewCount*50.0/schema.Views.Count), "Added view " + vs.ViewName + " to the SQLite database");
 
                     _log.Debug("added schema for SQLite view [" + vs.ViewName + "]");
                 });
@@ -561,8 +561,7 @@ namespace Converter.Logic
         {
             // Prepare a CREATE VIEW DDL statement
             String stmt = vs.ViewSQL;
-            _log.Info("\n\n" + stmt + "\n\n");
-
+            
             // Execute the query in order to actually create the view.
             SQLiteTransaction tx = conn.BeginTransaction();
             try
@@ -605,8 +604,6 @@ namespace Converter.Logic
         {
             // Prepare a CREATE TABLE DDL statement
             string stmt = BuildCreateTableQuery(dt);
-
-            _log.Info("\n\n" + stmt + "\n\n");
 
             // Execute the query in order to actually create the table.
             var cmd = new SQLiteCommand(stmt, conn);
@@ -954,7 +951,7 @@ namespace Converter.Logic
             return connectionString;
         }
 
-        private static void AddTriggersForForeignKeys(string sqlitePath, IEnumerable<TableSchema> schema, string password, SqlConversionHandler handler)
+        private static void AddTriggersForForeignKeys(string sqlitePath, IEnumerable<TableSchema> schema, string password, SqlConversionProgressReportingHandler progressReportingHandler)
         {
             // Connect to the newly created database
             string sqliteConnString = CreateSQLiteConnectionString(sqlitePath, password);
@@ -1021,14 +1018,14 @@ namespace Converter.Logic
     /// <param name="success">TRUE indicates that the current step finished successfully.</param>
     /// <param name="percent">Progress percent (0-100)</param>
     /// <param name="msg">A message that accompanies the progress.</param>
-    public delegate void SqlConversionHandler(bool done, bool success, int percent, string msg);
+    public delegate void SqlConversionProgressReportingHandler(bool done, bool success, int percent, string msg);
 
     /// <summary>
-    /// This handler allows the user to change which tables get converted from SQL Server
-    /// to SQLite.
+    /// This handler allows the user to select tables from the specified schema.
+    /// This can be used for a variety of scenarios.
     /// </summary>
-    /// <param name="schema">The original SQL Server DB schema</param>
-    /// <returns>The same schema minus any table we don't want to convert.</returns>
+    /// <param name="schema">The table schema that the user will be allowed to select from.</param>
+    /// <returns>The original schema after an operation has been performed to it.</returns>
     public delegate List<TableSchema> SqlTableSelectionHandler(List<TableSchema> schema);
 
     /// <summary>

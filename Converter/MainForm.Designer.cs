@@ -57,30 +57,34 @@ namespace Converter.WinForms
             this.saveToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.toolStripSeparator1 = new System.Windows.Forms.ToolStripSeparator();
             this.exitToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.groupBox1 = new System.Windows.Forms.GroupBox();
             this.menuStrip1.SuspendLayout();
+            this.groupBox1.SuspendLayout();
             this.SuspendLayout();
             // 
             // label1
             // 
             this.label1.AutoSize = true;
-            this.label1.Location = new System.Drawing.Point(9, 30);
+            this.label1.Location = new System.Drawing.Point(6, 22);
             this.label1.Name = "label1";
-            this.label1.Size = new System.Drawing.Size(106, 13);
+            this.label1.Size = new System.Drawing.Size(48, 13);
             this.label1.TabIndex = 0;
-            this.label1.Text = "SQL Server Address:";
+            this.label1.Text = "Address:";
             // 
             // txtSqlAddress
             // 
-            this.txtSqlAddress.Location = new System.Drawing.Point(151, 27);
+            this.txtSqlAddress.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right)));
+            this.txtSqlAddress.Location = new System.Drawing.Point(60, 19);
             this.txtSqlAddress.Name = "txtSqlAddress";
-            this.txtSqlAddress.Size = new System.Drawing.Size(429, 20);
+            this.txtSqlAddress.Size = new System.Drawing.Size(586, 20);
             this.txtSqlAddress.TabIndex = 1;
             this.txtSqlAddress.TextChanged += new System.EventHandler(this.txtSqlAddress_TextChanged);
             // 
             // label2
             // 
             this.label2.AutoSize = true;
-            this.label2.Location = new System.Drawing.Point(9, 111);
+            this.label2.Location = new System.Drawing.Point(12, 137);
             this.label2.Name = "label2";
             this.label2.Size = new System.Drawing.Size(135, 13);
             this.label2.TabIndex = 10;
@@ -88,7 +92,7 @@ namespace Converter.WinForms
             // 
             // txtSQLitePath
             // 
-            this.txtSQLitePath.Location = new System.Drawing.Point(151, 108);
+            this.txtSQLitePath.Location = new System.Drawing.Point(151, 134);
             this.txtSQLitePath.Name = "txtSQLitePath";
             this.txtSQLitePath.Size = new System.Drawing.Size(429, 20);
             this.txtSQLitePath.TabIndex = 11;
@@ -96,9 +100,9 @@ namespace Converter.WinForms
             // 
             // btnBrowseSQLitePath
             // 
-            this.btnBrowseSQLitePath.Location = new System.Drawing.Point(586, 106);
+            this.btnBrowseSQLitePath.Location = new System.Drawing.Point(586, 132);
             this.btnBrowseSQLitePath.Name = "btnBrowseSQLitePath";
-            this.btnBrowseSQLitePath.Size = new System.Drawing.Size(75, 23);
+            this.btnBrowseSQLitePath.Size = new System.Drawing.Size(78, 23);
             this.btnBrowseSQLitePath.TabIndex = 12;
             this.btnBrowseSQLitePath.Text = "Browse...";
             this.btnBrowseSQLitePath.UseVisualStyleBackColor = true;
@@ -107,7 +111,7 @@ namespace Converter.WinForms
             // btnStart
             // 
             this.btnStart.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
-            this.btnStart.Location = new System.Drawing.Point(365, 400);
+            this.btnStart.Location = new System.Drawing.Point(365, 489);
             this.btnStart.Name = "btnStart";
             this.btnStart.Size = new System.Drawing.Size(198, 23);
             this.btnStart.TabIndex = 17;
@@ -124,7 +128,7 @@ namespace Converter.WinForms
             // label3
             // 
             this.label3.AutoSize = true;
-            this.label3.Location = new System.Drawing.Point(9, 56);
+            this.label3.Location = new System.Drawing.Point(12, 110);
             this.label3.Name = "label3";
             this.label3.Size = new System.Drawing.Size(58, 13);
             this.label3.TabIndex = 3;
@@ -134,7 +138,7 @@ namespace Converter.WinForms
             // 
             this.cboDatabases.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
             this.cboDatabases.FormattingEnabled = true;
-            this.cboDatabases.Location = new System.Drawing.Point(151, 53);
+            this.cboDatabases.Location = new System.Drawing.Point(151, 107);
             this.cboDatabases.Name = "cboDatabases";
             this.cboDatabases.Size = new System.Drawing.Size(429, 21);
             this.cboDatabases.TabIndex = 4;
@@ -142,7 +146,7 @@ namespace Converter.WinForms
             // 
             // btnSet
             // 
-            this.btnSet.Location = new System.Drawing.Point(586, 25);
+            this.btnSet.Location = new System.Drawing.Point(571, 43);
             this.btnSet.Name = "btnSet";
             this.btnSet.Size = new System.Drawing.Size(75, 23);
             this.btnSet.TabIndex = 2;
@@ -153,7 +157,7 @@ namespace Converter.WinForms
             // pbrProgress
             // 
             this.pbrProgress.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
-            this.pbrProgress.Location = new System.Drawing.Point(12, 379);
+            this.pbrProgress.Location = new System.Drawing.Point(12, 468);
             this.pbrProgress.Name = "pbrProgress";
             this.pbrProgress.Size = new System.Drawing.Size(652, 18);
             this.pbrProgress.TabIndex = 16;
@@ -161,7 +165,7 @@ namespace Converter.WinForms
             // btnCancel
             // 
             this.btnCancel.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
-            this.btnCancel.Location = new System.Drawing.Point(569, 400);
+            this.btnCancel.Location = new System.Drawing.Point(569, 489);
             this.btnCancel.Name = "btnCancel";
             this.btnCancel.Size = new System.Drawing.Size(95, 23);
             this.btnCancel.TabIndex = 18;
@@ -172,7 +176,7 @@ namespace Converter.WinForms
             // cbxEncrypt
             // 
             this.cbxEncrypt.AutoSize = true;
-            this.cbxEncrypt.Location = new System.Drawing.Point(12, 137);
+            this.cbxEncrypt.Location = new System.Drawing.Point(15, 162);
             this.cbxEncrypt.Name = "cbxEncrypt";
             this.cbxEncrypt.Size = new System.Drawing.Size(127, 17);
             this.cbxEncrypt.TabIndex = 13;
@@ -182,7 +186,7 @@ namespace Converter.WinForms
             // 
             // txtPassword
             // 
-            this.txtPassword.Location = new System.Drawing.Point(151, 135);
+            this.txtPassword.Location = new System.Drawing.Point(151, 160);
             this.txtPassword.Name = "txtPassword";
             this.txtPassword.PasswordChar = '*';
             this.txtPassword.Size = new System.Drawing.Size(197, 20);
@@ -191,9 +195,7 @@ namespace Converter.WinForms
             // 
             // cbxIntegrated
             // 
-            this.cbxIntegrated.Checked = true;
-            this.cbxIntegrated.CheckState = System.Windows.Forms.CheckState.Checked;
-            this.cbxIntegrated.Location = new System.Drawing.Point(12, 81);
+            this.cbxIntegrated.Location = new System.Drawing.Point(60, 45);
             this.cbxIntegrated.Name = "cbxIntegrated";
             this.cbxIntegrated.Size = new System.Drawing.Size(130, 21);
             this.cbxIntegrated.TabIndex = 5;
@@ -203,47 +205,43 @@ namespace Converter.WinForms
             // 
             // txtUserDB
             // 
-            this.txtUserDB.Location = new System.Drawing.Point(186, 81);
+            this.txtUserDB.Location = new System.Drawing.Point(234, 45);
             this.txtUserDB.Name = "txtUserDB";
-            this.txtUserDB.Size = new System.Drawing.Size(100, 20);
+            this.txtUserDB.Size = new System.Drawing.Size(113, 20);
             this.txtUserDB.TabIndex = 7;
-            this.txtUserDB.Visible = false;
             this.txtUserDB.TextChanged += new System.EventHandler(this.txtUserDB_TextChanged);
             // 
             // txtPassDB
             // 
-            this.txtPassDB.Location = new System.Drawing.Point(351, 81);
+            this.txtPassDB.Location = new System.Drawing.Point(415, 45);
             this.txtPassDB.Name = "txtPassDB";
             this.txtPassDB.PasswordChar = '*';
             this.txtPassDB.Size = new System.Drawing.Size(113, 20);
             this.txtPassDB.TabIndex = 9;
-            this.txtPassDB.Visible = false;
             this.txtPassDB.TextChanged += new System.EventHandler(this.txtPassDB_TextChanged);
             // 
             // lblUser
             // 
             this.lblUser.AutoSize = true;
-            this.lblUser.Location = new System.Drawing.Point(148, 84);
+            this.lblUser.Location = new System.Drawing.Point(196, 48);
             this.lblUser.Name = "lblUser";
             this.lblUser.Size = new System.Drawing.Size(32, 13);
             this.lblUser.TabIndex = 6;
             this.lblUser.Text = "User:";
-            this.lblUser.Visible = false;
             // 
             // lblPassword
             // 
             this.lblPassword.AutoSize = true;
-            this.lblPassword.Location = new System.Drawing.Point(292, 84);
+            this.lblPassword.Location = new System.Drawing.Point(353, 48);
             this.lblPassword.Name = "lblPassword";
             this.lblPassword.Size = new System.Drawing.Size(56, 13);
             this.lblPassword.TabIndex = 8;
             this.lblPassword.Text = "Password:";
-            this.lblPassword.Visible = false;
             // 
             // cbxTriggers
             // 
             this.cbxTriggers.AutoSize = true;
-            this.cbxTriggers.Location = new System.Drawing.Point(12, 161);
+            this.cbxTriggers.Location = new System.Drawing.Point(15, 185);
             this.cbxTriggers.Name = "cbxTriggers";
             this.cbxTriggers.Size = new System.Drawing.Size(201, 17);
             this.cbxTriggers.TabIndex = 19;
@@ -254,7 +252,7 @@ namespace Converter.WinForms
             // cbxCreateViews
             // 
             this.cbxCreateViews.AutoSize = true;
-            this.cbxCreateViews.Location = new System.Drawing.Point(219, 161);
+            this.cbxCreateViews.Location = new System.Drawing.Point(222, 185);
             this.cbxCreateViews.Name = "cbxCreateViews";
             this.cbxCreateViews.Size = new System.Drawing.Size(249, 17);
             this.cbxCreateViews.TabIndex = 20;
@@ -269,9 +267,9 @@ namespace Converter.WinForms
             | System.Windows.Forms.AnchorStyles.Right)));
             this.lbMessages.FormattingEnabled = true;
             this.lbMessages.IntegralHeight = false;
-            this.lbMessages.Location = new System.Drawing.Point(12, 184);
+            this.lbMessages.Location = new System.Drawing.Point(12, 208);
             this.lbMessages.Name = "lbMessages";
-            this.lbMessages.Size = new System.Drawing.Size(652, 189);
+            this.lbMessages.Size = new System.Drawing.Size(652, 254);
             this.lbMessages.TabIndex = 21;
             // 
             // menuStrip1
@@ -333,32 +331,42 @@ namespace Converter.WinForms
             this.exitToolStripMenuItem.Text = "E&xit";
             this.exitToolStripMenuItem.Click += new System.EventHandler(this.ToolStripMenuItemExit);
             // 
+            // groupBox1
+            // 
+            this.groupBox1.Controls.Add(this.txtSqlAddress);
+            this.groupBox1.Controls.Add(this.label1);
+            this.groupBox1.Controls.Add(this.cbxIntegrated);
+            this.groupBox1.Controls.Add(this.txtUserDB);
+            this.groupBox1.Controls.Add(this.txtPassDB);
+            this.groupBox1.Controls.Add(this.lblUser);
+            this.groupBox1.Controls.Add(this.lblPassword);
+            this.groupBox1.Controls.Add(this.btnSet);
+            this.groupBox1.Location = new System.Drawing.Point(12, 27);
+            this.groupBox1.Name = "groupBox1";
+            this.groupBox1.Size = new System.Drawing.Size(652, 72);
+            this.groupBox1.TabIndex = 23;
+            this.groupBox1.TabStop = false;
+            this.groupBox1.Text = "SQL Server";
+            // 
             // MainForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(676, 426);
+            this.ClientSize = new System.Drawing.Size(676, 515);
+            this.Controls.Add(this.groupBox1);
             this.Controls.Add(this.lbMessages);
             this.Controls.Add(this.cbxCreateViews);
             this.Controls.Add(this.cbxTriggers);
-            this.Controls.Add(this.txtPassDB);
-            this.Controls.Add(this.txtUserDB);
-            this.Controls.Add(this.cbxIntegrated);
             this.Controls.Add(this.txtPassword);
             this.Controls.Add(this.cbxEncrypt);
             this.Controls.Add(this.btnCancel);
             this.Controls.Add(this.pbrProgress);
-            this.Controls.Add(this.btnSet);
             this.Controls.Add(this.cboDatabases);
-            this.Controls.Add(this.lblPassword);
-            this.Controls.Add(this.lblUser);
             this.Controls.Add(this.label3);
             this.Controls.Add(this.btnStart);
             this.Controls.Add(this.btnBrowseSQLitePath);
             this.Controls.Add(this.txtSQLitePath);
             this.Controls.Add(this.label2);
-            this.Controls.Add(this.txtSqlAddress);
-            this.Controls.Add(this.label1);
             this.Controls.Add(this.menuStrip1);
             this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedDialog;
             this.MainMenuStrip = this.menuStrip1;
@@ -369,6 +377,8 @@ namespace Converter.WinForms
             this.Load += new System.EventHandler(this.MainForm_Load);
             this.menuStrip1.ResumeLayout(false);
             this.menuStrip1.PerformLayout();
+            this.groupBox1.ResumeLayout(false);
+            this.groupBox1.PerformLayout();
             this.ResumeLayout(false);
             this.PerformLayout();
 
@@ -405,6 +415,7 @@ namespace Converter.WinForms
         private System.Windows.Forms.ToolStripMenuItem saveToolStripMenuItem;
         private System.Windows.Forms.ToolStripSeparator toolStripSeparator1;
         private System.Windows.Forms.ToolStripMenuItem exitToolStripMenuItem;
+        private System.Windows.Forms.GroupBox groupBox1;
     }
 }
 

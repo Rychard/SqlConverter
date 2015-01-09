@@ -11,9 +11,10 @@ namespace Converter.WinForms
     public partial class TableSelectionDialog : Form
     {
         #region Constructors
-        public TableSelectionDialog()
+        public TableSelectionDialog(String windowTitle)
         {
             this.InitializeComponent();
+            this.Text = windowTitle;
         }
         #endregion
 
@@ -94,7 +95,7 @@ namespace Converter.WinForms
             {
                 this.grdTables.Rows.Add(true, table.TableName);
                 this.grdTables.Rows[this.grdTables.Rows.Count - 1].Tag = table;
-            } // foreach
+            }
         }
         #endregion
     }
