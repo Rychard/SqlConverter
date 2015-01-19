@@ -59,7 +59,8 @@ namespace Converter.Logic
         /// <param name="sqlitePath">The path to the SQLite database file that needs to get created.</param>
         /// <param name="password">The password to use or NULL if no password should be used to encrypt the DB</param>
         /// <param name="progressReportingHandler">A handler delegate for progress notifications.</param>
-        /// <param name="selectionHandler">The selection handler that allows the user to select which tables to convert</param>
+        /// <param name="selectionHandlerDefinition">The selection handler that allows the user to select which tables to include in the converted SQLite database.</param>
+        /// /// <param name="selectionHandlerRecord">The selection handler that allows the user to select which tables to include the data of in the converted SQLite database.</param>
         /// <remarks>The method continues asynchronously in the background and the caller returns immediately.</remarks>
         public static void ConvertSqlServerToSQLiteDatabase(string sqlServerConnString, string sqlitePath, string password, SqlConversionProgressReportingHandler progressReportingHandler, SqlTableSelectionHandler selectionHandlerDefinition, SqlTableSelectionHandler selectionHandlerRecord, FailedViewDefinitionHandler viewFailureHandler, Boolean createTriggers, Boolean createViews)
         {
