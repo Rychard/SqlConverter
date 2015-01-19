@@ -15,12 +15,12 @@ namespace Converter.Logic
         #region Events
 
         /// <summary>
-        /// Occurs when a table schema has been read from the database.  Also contains progress information for the operation.
+        /// Raised when a table schema has been read from the database.  Also contains progress information for the operation.
         /// </summary>
         public event EventHandler<TableSchemaReaderProgressChangedEventArgs> TableSchemaReaderProgressChanged;
 
         /// <summary>
-        /// Occurs when a table schema has been read from the database.  Also contains progress information for the operation.
+        /// Raised when a table schema has been read from the database.  Also contains progress information for the operation.
         /// </summary>
         public event EventHandler<ViewSchemaReaderProgressChangedEventArgs> ViewSchemaReaderProgressChanged;
 
