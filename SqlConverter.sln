@@ -7,6 +7,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Converter.WinForms", "Conve
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Converter.Logic", "Converter.Logic\Converter.Logic.csproj", "{DCD66F3C-226E-4A3C-9FE5-670905A46C7C}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Converter.Standalone", "Converter.Standalone\Converter.Standalone.csproj", "{982A9E84-D5B1-4B4D-8CE4-5A518776EAE9}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -29,6 +31,12 @@ Global
 		{DCD66F3C-226E-4A3C-9FE5-670905A46C7C}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{DCD66F3C-226E-4A3C-9FE5-670905A46C7C}.Release|Any CPU.Build.0 = Release|Any CPU
 		{DCD66F3C-226E-4A3C-9FE5-670905A46C7C}.Release|x86.ActiveCfg = Release|Any CPU
+		{982A9E84-D5B1-4B4D-8CE4-5A518776EAE9}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{982A9E84-D5B1-4B4D-8CE4-5A518776EAE9}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{982A9E84-D5B1-4B4D-8CE4-5A518776EAE9}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{982A9E84-D5B1-4B4D-8CE4-5A518776EAE9}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{982A9E84-D5B1-4B4D-8CE4-5A518776EAE9}.Release|Any CPU.Build.0 = Release|Any CPU
+		{982A9E84-D5B1-4B4D-8CE4-5A518776EAE9}.Release|x86.ActiveCfg = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

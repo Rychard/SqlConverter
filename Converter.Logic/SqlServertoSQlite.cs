@@ -62,12 +62,12 @@ namespace Converter.Logic
         /// <param name="selectionHandlerDefinition">The selection handler that allows the user to select which tables to include in the converted SQLite database.</param>
         /// /// <param name="selectionHandlerRecord">The selection handler that allows the user to select which tables to include the data of in the converted SQLite database.</param>
         /// <remarks>The method continues asynchronously in the background and the caller returns immediately.</remarks>
-        public static void ConvertSqlServerToSQLiteDatabase(string sqlServerConnString, string sqlitePath, string password, SqlConversionProgressReportingHandler progressReportingHandler, SqlTableSelectionHandler selectionHandlerDefinition, SqlTableSelectionHandler selectionHandlerRecord, FailedViewDefinitionHandler viewFailureHandler, Boolean createTriggers, Boolean createViews)
+        public static Task ConvertSqlServerToSQLiteDatabase(string sqlServerConnString, string sqlitePath, string password, SqlConversionProgressReportingHandler progressReportingHandler, SqlTableSelectionHandler selectionHandlerDefinition, SqlTableSelectionHandler selectionHandlerRecord, FailedViewDefinitionHandler viewFailureHandler, Boolean createTriggers, Boolean createViews)
         {
             // Clear cancelled flag
             _cancelled = false;
 
-            Task.Factory.StartNew(() =>
+            var task = Task.Factory.StartNew(() =>
             {
                 try
                 {
@@ -84,6 +84,7 @@ namespace Converter.Logic
                     progressReportingHandler(true, false, 100, ex.Message);
                 }
             });
+            return task;
         }
 
         /// <summary>
