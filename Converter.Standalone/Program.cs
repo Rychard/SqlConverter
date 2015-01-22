@@ -68,6 +68,19 @@ namespace Converter.Standalone
 
             task.Wait();
 
+            if (task.Exception != null)
+            {
+                AddMessage("An error has occurred.  Details:");
+                var exception = task.Exception;
+
+                AddMessage(exception.ToString(), false);
+
+                foreach (var innerException in exception.InnerExceptions)
+                {
+                    AddMessage(innerException.ToString(), false);
+                }
+            }
+
             if (_logFileStream != null)
             {
                 _logFileStream.Dispose();    
@@ -145,13 +158,21 @@ namespace Converter.Standalone
             return true;
         }
 
-        private static void AddMessage(String msg)
+        private static void AddMessage(String msg, Boolean showTimestamp = true)
         {
             Boolean writeToConsole = _options.Verbose;
             Boolean writeToFile = (_logFileStream != null);
             
-            String time = DateTime.Now.ToLongTimeString();
-            String line = String.Format("[{0}] {1}", time, msg);
+            String line;
+            if (showTimestamp)
+            {
+                String time = DateTime.Now.ToLongTimeString();
+                line = String.Format("[{0}] {1}", time, msg);
+            }
+            else
+            {
+                line = msg;
+            }
 
             if (writeToConsole) { Console.WriteLine(line); }
             if (writeToFile) { _logFileStream.WriteLine(line); }
