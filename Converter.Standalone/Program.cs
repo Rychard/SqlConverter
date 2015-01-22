@@ -14,20 +14,31 @@ namespace Converter.Standalone
     class Program
     {
         private static ConversionConfiguration _config;
-        private static Boolean _running;
+        private static Options _options;
+        private static StreamWriter _logFileStream;
 
         static void Main(String[] args)
         {
-            var options = new Options();
-            var result = CommandLine.Parser.Default.ParseArguments(args, options);
+            _options = new Options();
+            var result = CommandLine.Parser.Default.ParseArguments(args, _options);
 
             if (!result)
             {
-                AddMessage("Invalid Configuration File");
+                AddMessage("Invalid Arguments");
                 return;
             }
 
-            String filename = options.ConfigFile;
+            String logFilePath = _options.LogFile;
+            if (!String.IsNullOrWhiteSpace(logFilePath))
+            {
+                if (File.Exists(logFilePath))
+                {
+                    File.Delete(logFilePath);
+                }
+                _logFileStream = new StreamWriter(File.OpenWrite(logFilePath));
+            }
+
+            String filename = _options.ConfigFile;
             Boolean success = SerializationHelper.TryXmlDeserialize(filename, out _config);
 
             if (!success)
@@ -36,7 +47,14 @@ namespace Converter.Standalone
                 return;
             }
 
-            _running = true;
+            if (!String.IsNullOrWhiteSpace(_options.DatabaseName))
+            {
+                // Allow user to override database name.
+                AddMessage(String.Format("A database name was supplied as an argument.  Configured database will not be used."));
+                _config.DatabaseName = _options.DatabaseName;
+            }
+
+            AddMessage(String.Format("Converting database: {0}", _config.DatabaseName));
 
             String sqlConnString = _config.ConnectionString;
 
@@ -49,6 +67,11 @@ namespace Converter.Standalone
             var task = SqlServerToSQLite.ConvertSqlServerToSQLiteDatabase(sqlConnString, filePathWithReplacedEnvironmentValues, _config.EncryptionPassword, progressReportingHandler, selectionHandlerDefinition, selectionHandlerRecords, viewFailureHandler, _config.CreateTriggersEnforcingForeignKeys, _config.TryToCreateViews);
 
             task.Wait();
+
+            if (_logFileStream != null)
+            {
+                _logFileStream.Dispose();    
+            }
         }
 
         private static void OnSqlConversionProgressReportingHandler(bool done, bool success, int percent, string msg)
@@ -73,7 +96,7 @@ namespace Converter.Standalone
 
             if (hasExcludedTableRecords)
             {
-                return schema.Where(tableSchema => !_config.ExcludedTableDefinitions.Contains(tableSchema.TableName)).ToList();
+                return schema.Where(tableSchema => !_config.ExcludedTableRecords.Contains(tableSchema.TableName)).ToList();
             }
             return schema;
         }
@@ -89,42 +112,13 @@ namespace Converter.Standalone
 
             if (!done)
             {
-                _running = false;
                 return;
             }
 
             if (success)
             {
                 AddMessage("Conversion Finished.");
-
-                // TODO: implement archive generation.
-                //// If a filename is set for an archive, then compress the database.
-                //var config = _manager.CurrentConfiguration;
-                //if (!String.IsNullOrWhiteSpace(config.SqLiteDatabaseFilePathCompressed))
-                //{
-                //    var contents = new Dictionary<String, String>
-                //    {
-                //        {Path.GetFileName(config.SqLiteDatabaseFilePath), config.SqLiteDatabaseFilePath}
-                //    };
-
-                //    ZipHelper.CreateZip(config.SqLiteDatabaseFilePathCompressed, contents);
-                //}
-
-                //MessageBox.Show(this, msg, "Conversion Finished", MessageBoxButtons.OK, MessageBoxIcon.Information);
             }
-            //else
-            //{
-            //    if (!_shouldExit)
-            //    {
-            //        MessageBox.Show(this, msg, "Conversion Failed", MessageBoxButtons.OK, MessageBoxIcon.Error);
-            //        pbrProgress.Value = 0;
-            //        AddMessage("Conversion Failed!");
-            //    }
-            //    else
-            //    {
-            //        Application.Exit();
-            //    }
-            //}
         }
 
         private static Boolean EnsureSaveLocationExists()
@@ -153,9 +147,14 @@ namespace Converter.Standalone
 
         private static void AddMessage(String msg)
         {
+            Boolean writeToConsole = _options.Verbose;
+            Boolean writeToFile = (_logFileStream != null);
+            
             String time = DateTime.Now.ToLongTimeString();
             String line = String.Format("[{0}] {1}", time, msg);
-            Console.WriteLine(line);
+
+            if (writeToConsole) { Console.WriteLine(line); }
+            if (writeToFile) { _logFileStream.WriteLine(line); }
         }
     }
 }
