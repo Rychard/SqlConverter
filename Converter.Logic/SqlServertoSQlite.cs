@@ -81,7 +81,7 @@ namespace Converter.Logic
                 {
                     _log.Error("Failed to convert SQL Server database to SQLite database", ex);
                     _isActive = false;
-                    progressReportingHandler(true, false, 100, ex.Message);
+                    progressReportingHandler(true, false, 100, ex.ToString());
                 }
             });
             return task;
@@ -215,7 +215,7 @@ namespace Converter.Logic
                                     {
                                         CheckCancelled();
                                         tx.Commit();
-                                        progressReportingHandler(false, true, (int)(100.0 * i / schema.Count), "Added " + counter + " rows to table " + schema[i].TableName + " so far");
+                                        progressReportingHandler(false, true, (int)(100.0 * i / schema.Count), String.Format("Added {0} rows to [{1}]", counter, schema[i].TableName));
                                         tx = sqliteConnection.BeginTransaction();
                                     }
                                 }
@@ -224,7 +224,7 @@ namespace Converter.Logic
                             CheckCancelled();
                             tx.Commit();
 
-                            progressReportingHandler(false, true, (int)(100.0 * i / schema.Count), "Finished inserting rows for table " + schema[i].TableName);
+                            progressReportingHandler(false, true, (int)(100.0 * i / schema.Count), String.Format("Finished inserting rows into [{0}]", schema[i].TableName));
                             _log.Debug("finished inserting all rows for table [" + schema[i].TableName + "]");
                         }
                         catch (Exception ex)
@@ -501,9 +501,8 @@ namespace Converter.Logic
             Object stateLocker = new Object();
             int tableCount = 0;
 
-            var orderedTables = schema.Tables.OrderBy(obj => obj.TableName).AsParallel();
-
-            Parallel.ForEach(orderedTables, dt =>
+            var orderedTables = schema.Tables.OrderBy(obj => obj.TableName).ToList();
+            foreach (var dt in orderedTables)
             {
                 using (var conn = new SQLiteConnection(sqliteConnString))
                 {
@@ -519,21 +518,21 @@ namespace Converter.Logic
                     }
                     lock (stateLocker)
                     {
-                        tableCount++;    
+                        tableCount++;
                     }
                     CheckCancelled();
-                    progressReportingHandler(false, true, (int)(tableCount * 50.0 / schema.Tables.Count), "Added table " + dt.TableName + " to the SQLite database");
+                    progressReportingHandler(false, true, (int)(tableCount * 50.0 / schema.Tables.Count), String.Format("Added table [{0}] to SQLite", dt.TableName));
 
                     _log.Debug("added schema for SQLite table [" + dt.TableName + "]");
                 }
-            });
+            }
 
             // Create all views in the new database
             int viewCount = 0;
             if (createViews)
             {
-                var orderedViews = schema.Views.OrderBy(obj => obj.ViewName).AsParallel();
-                Parallel.ForEach(orderedViews, vs =>
+                var orderedViews = schema.Views.OrderBy(obj => obj.ViewName).ToList();
+                foreach (var vs in orderedViews)
                 {
                     using (var conn = new SQLiteConnection(sqliteConnString))
                     {
@@ -550,10 +549,10 @@ namespace Converter.Logic
                     }
                     viewCount++;
                     CheckCancelled();
-                    progressReportingHandler(false, true, 50 + (int) (viewCount*50.0/schema.Views.Count), "Added view " + vs.ViewName + " to the SQLite database");
+                    progressReportingHandler(false, true, 50 + (int)(viewCount * 50.0 / schema.Views.Count), String.Format("Added view [{0}] to SQLite", vs.ViewName));
 
                     _log.Debug("added schema for SQLite view [" + vs.ViewName + "]");
-                });
+                }
             }
 
             _log.Debug("finished adding all table/view schemas for SQLite database");
