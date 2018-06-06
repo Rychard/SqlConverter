@@ -95,7 +95,11 @@ namespace Converter.Logic
         /// <param name="sqlitePath">The path to the generated SQLite database file</param>
         /// <param name="password">The password to use or NULL if no password should be used to encrypt the DB</param>
         /// <param name="progressReportingHandler">A handler to handle progress notifications.</param>
-        /// <param name="selectionHandler">The selection handler which allows the user to select which tables to convert.</param>
+        /// <param name="selectionHandlerDefinition">The selection handler which allows the user to select which tables to convert.</param>
+        /// <param name="selectionHandlerRecord">The selection handler which allows the user to select which tables to convert.</param>
+        /// <param name="viewFailureHandler">The selection handler which allows the user to select which views to convert.</param>
+        /// <param name="createTriggers">Whether or not triggers should be converted</param>
+        /// <param name="createViews">Whether or not views should be converted</param>
         private static void ConvertSqlServerDatabaseToSQLiteFile(String sqlConnString, String sqlitePath, String password, SqlConversionProgressReportingHandler progressReportingHandler, SqlTableSelectionHandler selectionHandlerDefinition, SqlTableSelectionHandler selectionHandlerRecord, FailedViewDefinitionHandler viewFailureHandler, Boolean createTriggers, Boolean createViews)
         {
             // Delete the destination file (only if it exists)
@@ -231,7 +235,6 @@ namespace Converter.Logic
                         {
                             _log.Error("unexpected exception", ex);
                             tx.Rollback();
-                            throw;
                         }
                     }
                 }

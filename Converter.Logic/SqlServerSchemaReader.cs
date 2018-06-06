@@ -471,7 +471,7 @@ namespace Converter.Logic
                 int viewsProcessed;
                 lock (stateLocker)
                 {
-                    count++;
+                    //count++;
                     viewsProcessed = count; // Copy the current number of processed views to a local for future usage.
                 }
                 SqlServerToSQLite.CheckCancelled();

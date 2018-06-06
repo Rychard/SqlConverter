@@ -107,6 +107,8 @@ namespace Converter.WinForms
                 pbrProgress.Value = 0;
                 AddMessage("cboDatabases - SelectedIndexChanged");
             }
+
+            _manager.CurrentConfiguration.DatabaseName = control.Text;
         }
 
         private void btnSet_Click(object sender, EventArgs e)
